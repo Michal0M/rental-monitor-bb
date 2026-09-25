@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prenájmy BB - monitor</title>
+<style>
+  :root { --bg:#0f1115; --card-bg:#1a1d24; --border:#2a2e38; --text:#e8eaed; --text-dim:#9aa0aa;
+          --accent:#4f9dff; --green:#3ecf8e; --red:#ff5c5c; --yellow:#f5c518; }
+  * { box-sizing: border-box; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,"Segoe UI",Roboto,sans-serif; margin:0; padding:16px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .subtitle { color:var(--text-dim); font-size:13px; margin-bottom:12px; }
+  .run-status { font-size:12px; color:var(--text-dim); margin-bottom:12px; }
+  .run-problem { color:#fff; background:rgba(255,92,92,.18); border:1px solid var(--red); border-radius:6px; padding:8px 10px; }
+  .controls { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
+  .controls button { background:var(--card-bg); border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; }
+  .controls button.active, .controls button.sort-btn-active { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .sort-label { color:var(--text-dim); font-size:13px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:14px; }
+  .card { background:var(--card-bg); border:1px solid var(--border); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+  .card[data-cat="removed"] { opacity:.5; }
+  .card-photo-link { display:block; }
+  .card-photo { width:100%; height:170px; object-fit:cover; background:#000; display:block; }
+  .card-photo-placeholder { align-items:center; justify-content:center; color:var(--text-dim); font-size:12px; background:#15171c; display:flex; }
+  .card-body { padding:12px; display:flex; flex-direction:column; gap:6px; }
+  .badges { display:flex; gap:4px; flex-wrap:wrap; }
+  .badge { font-size:10px; padding:2px 6px; border-radius:4px; font-weight:600; }
+  .badge-fresh { background:var(--green); color:#000; }
+  .badge-sold { background:var(--red); color:#fff; }
+  .cond-new, .cond-renovated { background:#1f4d3a; color:#8ff0c0; }
+  .cond-partial, .cond-unknown { background:#4a3a1a; color:#f0c070; }
+  .cond-old { background:#4a1a2a; color:#f08fb0; }
+  .badge-parking { background:#2a3f5f; color:#9dc4ff; }
+  .badge-info { background:#2a2e38; color:var(--text-dim); }
+  .badge-warn { background:var(--yellow); color:#000; }
+  .card-title { color:var(--text); font-weight:600; font-size:14px; text-decoration:none; line-height:1.3; }
+  .card-title:hover { color:var(--accent); }
+  .card-price { font-size:20px; font-weight:700; }
+  .plus { font-size:12px; font-weight:500; color:var(--yellow); }
+  .plus.ok { color:var(--green); } .plus.dim { color:var(--text-dim); }
+  .total-note { font-size:12px; color:var(--yellow); margin-top:-4px; }
+  .price-history { font-size:11px; color:var(--text-dim); }
+  .price-history.price-down { color:var(--green); } .price-history.price-up { color:var(--red); }
+  .card-meta { font-size:12px; color:var(--text-dim); }
+  .card-footer { display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:10px; color:var(--text-dim); margin-top:4px; border-top:1px solid var(--border); padding-top:6px; }
+  .card-footer a { color:var(--accent); }
+  .empty-state { color:var(--text-dim); padding:40px; text-align:center; }
+</style>
+</head>
+<body>
+  <h1>🏠 Prenájmy 2- a 3-izbových bytov · Banská Bystrica</h1>
+  <div class="subtitle">Aktualizované: 2026-09-25 16:31 UTC · rozsah 400–800 € · 2/3-izbové</div>
+  <div class="run-status run-problem">⚠️ Posledný beh zlyhal aspoň pre jeden zdroj - dáta u neho môžu byť neaktuálne. nehnutelnosti.sk: OK (136 inzerátov, 2026-09-25 16:30 UTC) · <b>reality.sk: ZLYHALO (network)</b> - ConnectTimeout: HTTPSConnectionPool(host=&#x27;www.reality.sk&#x27;, port=443): Max retries exceeded with url: /byty/2-izbovy-byt/banska-bystrica/prenajom/ (Caused by ConnectTimeoutError(&lt;HTTPSConnection(host=&#x27; (2026-09-25 16:31 UTC)</div>
+  <div class="controls">
+    <button class="filter-btn active" data-filter="good">Novostavba / rekonštrukcia (49)</button>
+    <button class="filter-btn" data-filter="unsure">Neistý stav (42)</button>
+    <button class="filter-btn" data-filter="old">Pôvodný stav (1)</button>
+    <button class="filter-btn" data-filter="removed">Stiahnuté (0)</button>
+    <button class="filter-btn" data-filter="all">Všetky (92)</button>
+  </div>
+  <div class="controls">
+    <span class="sort-label">Zoradiť:</span>
+    <button class="sort-btn sort-btn-active" data-field="total">Cena celkom</button>
+    <button class="sort-btn" data-field="ppm2">€/m²</button>
+    <button class="sort-btn" data-field="area">Plocha</button>
+    <button class="sort-btn" data-field="first">Najnovšie</button>
+  </div>
+  <div id="grid" class="grid">
+    
+    <div class="card" data-cat="good" data-total="470" data-ppm2="5.80"
+         data-area="81.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuzvSMTJROA/prenajmeme-velky-3-izb-byt-v-idealnej-lokalite-bb" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/IhMHUqVp3_fss?st=dIHLQKDTFzNbytiGVSpS6QdD3ZR0AByi8En5ltz6gbg&amp;ts=1789710311&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuzvSMTJROA/prenajmeme-velky-3-izb-byt-v-idealnej-lokalite-bb" target="_blank" rel="noopener" class="card-title">Prenajmeme veľký 3-izb byt v ideálnej lokalite BB</a>
+        <div class="card-price">470 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 81 m² · 5.8 €/m² · Československej armády 2</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuzvSMTJROA/prenajmeme-velky-3-izb-byt-v-idealnej-lokalite-bb" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="540" data-ppm2="9.82"
+         data-area="55.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuuJOlF20QS/2-izbovy-byt-mateja-bela" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/z21mhryoE_fss?st=Qos3wr1OuddniX4fGH-BoNAUu5IJ2rmSXk0qhzAd9Xc&amp;ts=1790084524&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-partial" title="z popisu inzerátu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie v cene</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuuJOlF20QS/2-izbovy-byt-mateja-bela" target="_blank" rel="noopener" class="card-title">Na prenájom 2 izbový byt Mateja Bela</a>
+        <div class="card-price">540 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 55 m² · 9.8 €/m² · Mateja Bela 1</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuuJOlF20QS/2-izbovy-byt-mateja-bela" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="550" data-ppm2="6.96"
+         data-area="79.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju-5UCsMhmy/prenajom-trojizbovy-byt-79-m2-banska-bystrica-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/773usBEtw_fss?st=Yqh5pkxZwammJXn5UbOqFwp0u68GLobG6QGZvZ7ebJA&amp;ts=1780742626&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Nezariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju-5UCsMhmy/prenajom-trojizbovy-byt-79-m2-banska-bystrica-foncorda" target="_blank" rel="noopener" class="card-title">Prenájom trojizbový byt, 79 m2, Banská Bystrica, Fončorda.</a>
+        <div class="card-price">550 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 79 m² · 7.0 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju-5UCsMhmy/prenajom-trojizbovy-byt-79-m2-banska-bystrica-foncorda" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="570" data-ppm2="11.88"
+         data-area="48.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju4PLN8-19a/zariadeny-2-izbovy-byt-lodzia-satnik-pivnica-s-dobrym-parkovanim-sasova" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL3JzZg==/SISiNwL6h__fss?st=gUCwEszrejG8Fijr_caAAxtFYbiGlIUfHOmnhT90HpY&amp;ts=1723624028&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju4PLN8-19a/zariadeny-2-izbovy-byt-lodzia-satnik-pivnica-s-dobrym-parkovanim-sasova" target="_blank" rel="noopener" class="card-title">Zariadený 2 izbový byt + lodžia + šatník + pivnica s dobrým parkovaním SÁSOVÁ</a>
+        <div class="card-price">570 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 48 m² · 11.9 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju4PLN8-19a/zariadeny-2-izbovy-byt-lodzia-satnik-pivnica-s-dobrym-parkovanim-sasova" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="574" data-ppm2="14.72"
+         data-area="39.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuoURyQVOPm/top-living-prenajom-2-izb-apartmanu-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/YAAEXPg3Y_fss?st=ZNqW1zilSKgitriBP8zspkefLei7BoutWYeeF7gCbko&amp;ts=1768329439&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie za príplatok</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuoURyQVOPm/top-living-prenajom-2-izb-apartmanu-v-banskej-bystrici" target="_blank" rel="noopener" class="card-title">2-IZB. APARTMÁN, UHLISKO, 574,-Eur s energiami</a>
+        <div class="card-price">574 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 39 m² · 14.7 €/m² · Hviezdoslavova</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuoURyQVOPm/top-living-prenajom-2-izb-apartmanu-v-banskej-bystrici" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="599" data-ppm2="18.15"
+         data-area="33.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuG8LRNPgVu/15i-byt-5-min-od-nam-snp-skolska-ulica-banska-bystrica-milvar-exkluzivne" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/qmUGNFl-u_fss?st=LUg3C0bzbS1GUuq6tnw-6blH35dopGDeMO3aRfb-7us&amp;ts=1787305314&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuG8LRNPgVu/15i-byt-5-min-od-nam-snp-skolska-ulica-banska-bystrica-milvar-exkluzivne" target="_blank" rel="noopener" class="card-title">1,5i byt Školská ulica, Banská Bystrica. Milvar. 5 min. od Nám. SNP. Exkluzívne.</a>
+        <div class="card-price">599 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 33 m² · 18.2 €/m² · Školská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuG8LRNPgVu/15i-byt-5-min-od-nam-snp-skolska-ulica-banska-bystrica-milvar-exkluzivne" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="600" data-ppm2="10.91"
+         data-area="55.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju9rJDyAlKr/2-izbovy-byt-55-m2-po-obnove-pivnica-sidlisko-bb-600-euro-vratane-energii" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/85GpCWTJL_fss?st=SXiIb93LVBMs839eHD2ktoaQ0EiB-Bpvmmyzth82IM0&amp;ts=1789378106&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Nezariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju9rJDyAlKr/2-izbovy-byt-55-m2-po-obnove-pivnica-sidlisko-bb-600-euro-vratane-energii" target="_blank" rel="noopener" class="card-title">2-izbový byt 55 m² po obnove, pivnica, Sídlisko BB, 600 € vrátane energií</a>
+        <div class="card-price">600 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 55 m² · 10.9 €/m² · Jegorovova</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju9rJDyAlKr/2-izbovy-byt-55-m2-po-obnove-pivnica-sidlisko-bb-600-euro-vratane-energii" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="600" data-ppm2="9.84"
+         data-area="61.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju2o3TsPcdR/prenajom-velky-2i-byt-usvit-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/akyJWLpYC_fss?st=ZhE3oxZpw-ftSD7ePx2vcsbZoOJUI5L609HBnk6J6ro&amp;ts=1788607703&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-partial" title="z popisu inzerátu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju2o3TsPcdR/prenajom-velky-2i-byt-usvit-banska-bystrica" target="_blank" rel="noopener" class="card-title">Prenájom veľký 2i byt Úsvit Banská Bystrica</a>
+        <div class="card-price">600 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 61 m² · 9.8 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju2o3TsPcdR/prenajom-velky-2i-byt-usvit-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="600" data-ppm2="6.74"
+         data-area="89.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuJL6GXwLgA/2-izbovy-byt-v-rodinnom-dome-na-prenajom-malachov" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/H_wGUixn2_fss?st=UvavlsX0_bMeps3ZKnOZf4mg1uVYeLxeYO5O67S4sVs&amp;ts=1783593576&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuJL6GXwLgA/2-izbovy-byt-v-rodinnom-dome-na-prenajom-malachov" target="_blank" rel="noopener" class="card-title">2-izbový byt v rodinnom dome na prenájom - Malachov</a>
+        <div class="card-price">600 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 89 m² · 6.7 €/m² · Radvaň</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuJL6GXwLgA/2-izbovy-byt-v-rodinnom-dome-na-prenajom-malachov" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="600" data-ppm2="10.34"
+         data-area="58.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JujuYYRoL22/lokalita-fortnicka-centrum-bb-prenajom-2-izb-bytu-58-m2-v-tehlovom-bytovom-dome-s-pivnicou-a-1x-parkovacim-rezidencnym-miestom-ulica-m-razus" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/F2JJqhJTT_fss?st=RwVSAr5OymNyoP2ag4M4oyFpUIu-eFswMbjqHxQYILA&amp;ts=1789147491&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JujuYYRoL22/lokalita-fortnicka-centrum-bb-prenajom-2-izb-bytu-58-m2-v-tehlovom-bytovom-dome-s-pivnicou-a-1x-parkovacim-rezidencnym-miestom-ulica-m-razus" target="_blank" rel="noopener" class="card-title">Lokalita Fortnička (Centrum BB) - Prenájom 2 izb. bytu (58 m2) v tehlovom bytovom dome  s pivnicou a 1x parkovacím rezidenčným miestom, ulica M. Rázus</a>
+        <div class="card-price">600 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 58 m² · 10.3 €/m² · M. Rázusa</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JujuYYRoL22/lokalita-fortnicka-centrum-bb-prenajom-2-izb-bytu-58-m2-v-tehlovom-bytovom-dome-s-pivnicou-a-1x-parkovacim-rezidencnym-miestom-ulica-m-razus" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="600" data-ppm2="18.75"
+         data-area="32.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuBMeGx-3H7/zrekonstruovany-15i-byt-v-radvani" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/3C-KTJSF7_fss?st=BI1B_alpMEYxC2WpJV5qihlLp-sobe7kCIFkxjydrZk&amp;ts=1790001003&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuBMeGx-3H7/zrekonstruovany-15i-byt-v-radvani" target="_blank" rel="noopener" class="card-title">Zrekonštruovaný 1,5i byt v Radvani</a>
+        <div class="card-price">600 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 32 m² · 18.8 €/m² · Podháj</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuBMeGx-3H7/zrekonstruovany-15i-byt-v-radvani" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="600" data-ppm2="9.47"
+         data-area="63.38" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju-nHbriolN/hd-reality-prenajom-2-izboveho-bytu-na-slnecnej" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/1iFP5ToJ__fss?st=lnGmGFG6jeIMK4iehC19QEsAelAzemuXQm79n-ln50M&amp;ts=1786374445&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju-nHbriolN/hd-reality-prenajom-2-izboveho-bytu-na-slnecnej" target="_blank" rel="noopener" class="card-title">HD REALITY, prenájom 2-izbového bytu na Slnečnej</a>
+        <div class="card-price">600 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 63.38 m² · 9.5 €/m² · Slnečná</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju-nHbriolN/hd-reality-prenajom-2-izboveho-bytu-na-slnecnej" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="600" data-ppm2="11.11"
+         data-area="54.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Jugcmncw4V7/prenajom-2-izboveho-bytu" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/z35MFn22i_fss?st=wE5j9n48nZJI28_HJajV-9cSnQFvJy8Ro5NmSRInLv8&amp;ts=1788331805&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Jugcmncw4V7/prenajom-2-izboveho-bytu" target="_blank" rel="noopener" class="card-title">Prenájom 2 izbového bytu</a>
+        <div class="card-price">600 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 54 m² · 11.1 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Jugcmncw4V7/prenajom-2-izboveho-bytu" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="640" data-ppm2="12.08"
+         data-area="53.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuAI06C-0f8/prenajom-2i-pekny-byt-s-balkonom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/miGNX_9lG_fss?st=ZPqNQDz7dYIXNyV_uB6eEu69iPSNiZ4YuUqyXU7KNS4&amp;ts=1788558617&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuAI06C-0f8/prenajom-2i-pekny-byt-s-balkonom" target="_blank" rel="noopener" class="card-title">prenájom - 2i pekný byt s balkónom, dostupný ihneď</a>
+        <div class="card-price">640 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 53 m² · 12.1 €/m² · Starohorská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuAI06C-0f8/prenajom-2i-pekny-byt-s-balkonom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="650" data-ppm2="11.40"
+         data-area="57.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju6LTUHH4Wd/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/c3UKx_1Ei_fss?st=VtYcpT5V2QbaQKKYFZf4-hOJAtYeWj2qbDNDTouGlzo&amp;ts=1785703036&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-partial" title="z popisu inzerátu">Čiastočná rekonštrukcia</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju6LTUHH4Wd/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-title">Svetlý 2i byt s balkónom na prenájom – BB, vyhľadávaná lokalita Uhlisko</a>
+        <div class="card-price">650 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 57 m² · 11.4 €/m² · Viestova</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju6LTUHH4Wd/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="650" data-ppm2="9.85"
+         data-area="66.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju_jVEFAVx8/rfreality-2-izb-moderny-zariadeny-byt-v-novostavbe-prsianska-terasa" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/FEmvnqAeD_fss?st=BU5EwcVlTS5YpzXfjZVqLfTDzD8Ggl50M5bL_9AIq5M&amp;ts=1790237233&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju_jVEFAVx8/rfreality-2-izb-moderny-zariadeny-byt-v-novostavbe-prsianska-terasa" target="_blank" rel="noopener" class="card-title">*RFReality* 2 izb. moderný, zariadený byt v novostavbe -Pršianska terasa</a>
+        <div class="card-price">650 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 66 m² · 9.8 €/m² · Bronzová</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju_jVEFAVx8/rfreality-2-izb-moderny-zariadeny-byt-v-novostavbe-prsianska-terasa" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="650" data-ppm2="14.13"
+         data-area="46.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuzDjbjdYMT/sirsie-centrum-mesta-bb-prenajom-2-izb-bytu-4621-m2-po-komplet-rekonstrukcii-od-bytoveho-architekta-s-balkonom-pivnicou-a-vonkajsim-parkovacim" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/UKSnLJM2X_fss?st=O-rfob1KZZZMxyQp97HbRiYaKd1j1xwgvuXXK7-a6II&amp;ts=1789150065&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuzDjbjdYMT/sirsie-centrum-mesta-bb-prenajom-2-izb-bytu-4621-m2-po-komplet-rekonstrukcii-od-bytoveho-architekta-s-balkonom-pivnicou-a-vonkajsim-parkovacim" target="_blank" rel="noopener" class="card-title">Širšie centrum mesta BB – Prenájom 2 izb. bytu (46,21 m2) po komplet. rekonštrukcii od bytového architekta s balkónom, pivnicou a vonkajším parkovaním</a>
+        <div class="card-price">650 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 46 m² · 14.1 €/m² · Horná</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuzDjbjdYMT/sirsie-centrum-mesta-bb-prenajom-2-izb-bytu-4621-m2-po-komplet-rekonstrukcii-od-bytoveho-architekta-s-balkonom-pivnicou-a-vonkajsim-parkovacim" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="650" data-ppm2="14.13"
+         data-area="46.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuQWqHnQ0su/centrum-bb-prenajom-slnecneho-2-izb-bytu-4636-m2-v-novostavbe-s-balkonom-8-m2-pivnicou-4-m2-a-1x-parkovacim-miestom-ulica-kapitulska" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/kFsi2ZLDi_fss?st=1457JG-gizuEstWcafAkuG_zdIroqPPMdiWbCR72Zmw&amp;ts=1789148311&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuQWqHnQ0su/centrum-bb-prenajom-slnecneho-2-izb-bytu-4636-m2-v-novostavbe-s-balkonom-8-m2-pivnicou-4-m2-a-1x-parkovacim-miestom-ulica-kapitulska" target="_blank" rel="noopener" class="card-title">Centrum BB - Prenájom slnečného 2 izb. bytu (46,36 m2) v novostavbe s balkónom (8 m2), pivnicou (4 m2) a 1x parkovacím miestom, ulica Kapitulská</a>
+        <div class="card-price">650 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 46 m² · 14.1 €/m² · Kapitulská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuQWqHnQ0su/centrum-bb-prenajom-slnecneho-2-izb-bytu-4636-m2-v-novostavbe-s-balkonom-8-m2-pivnicou-4-m2-a-1x-parkovacim-miestom-ulica-kapitulska" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="650" data-ppm2="10.48"
+         data-area="62.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Jujhpgy1LzeS/na-prenajom-2-izbovy-byt-v-centre-mesta-cast-fortnicka" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/uDYzvkvMM_fss?st=kvH_Y5K5BI9TQrCXjsnkxzp2pVOX-uJX784SJ3p687I&amp;ts=1777991671&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Jujhpgy1LzeS/na-prenajom-2-izbovy-byt-v-centre-mesta-cast-fortnicka" target="_blank" rel="noopener" class="card-title">Na prenájom:  2-izbový byt v centre mesta časť FORTNIČKA</a>
+        <div class="card-price">650 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 62 m² · 10.5 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Jujhpgy1LzeS/na-prenajom-2-izbovy-byt-v-centre-mesta-cast-fortnicka" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="650" data-ppm2="10.16"
+         data-area="64.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuSFrP3nlNt/kompletne-zariadeny-2-izbovy-byt-na-foncorde-na-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/1DaMrTYw3_fss?st=LgU66ERWogrcX-vnEwyxMfoQ9HPBLnu5_u_W-KKGBCc&amp;ts=1783009047&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuSFrP3nlNt/kompletne-zariadeny-2-izbovy-byt-na-foncorde-na-prenajom" target="_blank" rel="noopener" class="card-title">PRENAJATÉ - Kompletne zariadený 2-izbový byt na Fončorde na prenájom</a>
+        <div class="card-price">650 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 64 m² · 10.2 €/m² · Tulská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuSFrP3nlNt/kompletne-zariadeny-2-izbovy-byt-na-foncorde-na-prenajom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="650" data-ppm2="9.15"
+         data-area="71.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JudCD00Lzrm/3-izbovy-byt-s-lodziou-a-pivnicou-banska-bystrica-sasova" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/fC0JKFzga_fss?st=fs8Bfwkf-sznT7H9K13TR6OfkiU1ZFIyhiJokk8cWgk&amp;ts=1789642798&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JudCD00Lzrm/3-izbovy-byt-s-lodziou-a-pivnicou-banska-bystrica-sasova" target="_blank" rel="noopener" class="card-title">3-izbový byt s lódžiou a pivnicou, Banská Bystrica, Sásová</a>
+        <div class="card-price">650 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 71 m² · 9.2 €/m² · Tatranská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JudCD00Lzrm/3-izbovy-byt-s-lodziou-a-pivnicou-banska-bystrica-sasova" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="660" data-ppm2="12.00"
+         data-area="55.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuH_gDr6WKc/2izbovy-byt-s-pivnicou-a-vnutornym-parkovanim" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/ZFiB29mDi_fss?st=s5_OuT-0BW1TenMj8GxSByMizUdmkajLWajzmH9IzCM&amp;ts=1790284641&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuH_gDr6WKc/2izbovy-byt-s-pivnicou-a-vnutornym-parkovanim" target="_blank" rel="noopener" class="card-title">2izbovy byt s pivnicou a vnútorným parkovanim</a>
+        <div class="card-price">660 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 55 m² · 12.0 €/m² · Cesta k nemocnici</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuH_gDr6WKc/2izbovy-byt-s-pivnicou-a-vnutornym-parkovanim" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="660" data-ppm2="7.33"
+         data-area="90.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuQFlcHhM-_/bez-provizie-rk-dam-do-prenajmu-3-izbovy-byt-v-centre-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/QlWRAzZcA_fss?st=zNQsCifuHi5lMdkpQk4P8M39XLDEpwEAweHfHEVmRL4&amp;ts=1754988190&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie za príplatok</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuQFlcHhM-_/bez-provizie-rk-dam-do-prenajmu-3-izbovy-byt-v-centre-banskej-bystrici" target="_blank" rel="noopener" class="card-title">BEZ PROVÍZIE RK - Dám do prenájmu 3 izbový byt v centre Banskej Bystrici</a>
+        <div class="card-price">660 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 90 m² · 7.3 €/m² · Petelenova</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuQFlcHhM-_/bez-provizie-rk-dam-do-prenajmu-3-izbovy-byt-v-centre-banskej-bystrici" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="670" data-ppm2="10.31"
+         data-area="65.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuUodEq7jAx/na-prenajom-velky-2-izbovy-byt-v-priamom-centre-banskej-bystrice" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/M1MhkXQGa_fss?st=A6Lj1qwkHYiwoFytO4nsDe3b59CTsWlkmM83q6iiIfk&amp;ts=1751053377&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuUodEq7jAx/na-prenajom-velky-2-izbovy-byt-v-priamom-centre-banskej-bystrice" target="_blank" rel="noopener" class="card-title">PRENAJATÉ - Na prenájom veľký 2-izbový byt v priamom centre Banskej Bystrice</a>
+        <div class="card-price">670 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 65 m² · 10.3 €/m² · Železničiarska</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuUodEq7jAx/na-prenajom-velky-2-izbovy-byt-v-priamom-centre-banskej-bystrice" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="670" data-ppm2="12.25"
+         data-area="54.7" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuIn8YhWlDi/prenajom-2-izbovy-byt-banska-bystrica-mestska-cast-sidlisko-snp" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/3go_Hz6Ev_fss?st=1_flPZNb90hZLGp9ZC8AcYvzJGNyDQf9TG4t0fwxcIQ&amp;ts=1786977721&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-partial" title="z popisu inzerátu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuIn8YhWlDi/prenajom-2-izbovy-byt-banska-bystrica-mestska-cast-sidlisko-snp" target="_blank" rel="noopener" class="card-title">Prenájom 2 izbový byt Banská Bystrica</a>
+        <div class="card-price">670 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 54.7 m² · 12.2 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuIn8YhWlDi/prenajom-2-izbovy-byt-banska-bystrica-mestska-cast-sidlisko-snp" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="680" data-ppm2="11.72"
+         data-area="58.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuXKh6owugZ/2-izbovy-byt-prenajom-trieda-snp-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/prAL6ZP3h_fss?st=8JbbUorCtbAQaLfM-n-GU2lXqAn5wKGEZnlXxwqKPKY&amp;ts=1789558661&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span><span class="badge badge-info">Panelák</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuXKh6owugZ/2-izbovy-byt-prenajom-trieda-snp-banska-bystrica" target="_blank" rel="noopener" class="card-title">2 izbový byt / prenájom / Trieda SNP / Banská Bystrica</a>
+        <div class="card-price">680 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 58 m² · 11.7 €/m² · Trieda SNP</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuXKh6owugZ/2-izbovy-byt-prenajom-trieda-snp-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="680" data-ppm2="11.33"
+         data-area="60.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuQ1KTzG-Vv/kompletne-zariadeny-2-izbovy-byt-v-radvani-na-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Yl9VRRJYa_fss?st=iSr7lJfoi-iCDFHzrvjdZNma0XJWJjhdMQZtkqaQOOE&amp;ts=1787682959&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuQ1KTzG-Vv/kompletne-zariadeny-2-izbovy-byt-v-radvani-na-prenajom" target="_blank" rel="noopener" class="card-title">REZERVOVANÉ - Kompletne zariadený 2-izbový byt v Radvani na prenájom</a>
+        <div class="card-price">680 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 60 m² · 11.3 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuQ1KTzG-Vv/kompletne-zariadeny-2-izbovy-byt-v-radvani-na-prenajom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="690" data-ppm2="10.62"
+         data-area="65.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuvYTDFHBFw/happy-house-middle" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/9XrYJZd7F_fss?st=4iQVit08pcqlLkKamNheh33t4Ra5l4GUqjruPnWz4co&amp;ts=1765290514&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span><span class="badge badge-info">Panelák</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuvYTDFHBFw/happy-house-middle" target="_blank" rel="noopener" class="card-title">2-izbový apartmán so záhradou a parkovaním | energie + internet v cene</a>
+        <div class="card-price">690 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 65 m² · 10.6 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuvYTDFHBFw/happy-house-middle" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="690" data-ppm2="11.90"
+         data-area="58.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Juf8HMIzK3Z/2-izbovy-byt-v-centre-banskej-bystrice-s-balkonom-na-prenajom-na-zelezniciarskej-ulici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/qJfMIAkjm_fss?st=YpgqoRVa7rWpRbD_ZyAeOx4l9uWR2gRIRMhXWDq4K_M&amp;ts=1789727971&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie v cene</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Juf8HMIzK3Z/2-izbovy-byt-v-centre-banskej-bystrice-s-balkonom-na-prenajom-na-zelezniciarskej-ulici" target="_blank" rel="noopener" class="card-title">2-izbový byt v centre Banskej Bystrice s balkónom na prenájom na Železničiarskej ulici</a>
+        <div class="card-price">690 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 58 m² · 11.9 €/m² · Centrum</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Juf8HMIzK3Z/2-izbovy-byt-v-centre-banskej-bystrice-s-balkonom-na-prenajom-na-zelezniciarskej-ulici" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="690" data-ppm2="13.80"
+         data-area="50.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuBF25TEbyz/rezervovany-lokalita-foncorda-prenajom-2-izb-bytu-50-m2-v-novostavbe-s-balkonom-pivnicou-a-parkovacim-miestom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL3JzZg==/t6uRLkbS4_fss?st=n0F2oPKD_iEjMP8A7lz4j2I-iFAqAxry7A39gqgEjQ8&amp;ts=1697821819&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuBF25TEbyz/rezervovany-lokalita-foncorda-prenajom-2-izb-bytu-50-m2-v-novostavbe-s-balkonom-pivnicou-a-parkovacim-miestom" target="_blank" rel="noopener" class="card-title">Lokalita Fončorda - Prenájom 2 izb. bytu (50 m2) v novostavbe s balkónom (5 m2), pivnicou (5 m2) a vonkajším parkovacím miestom (13 m2)</a>
+        <div class="card-price">690 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 50 m² · 13.8 €/m² · Tulská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuBF25TEbyz/rezervovany-lokalita-foncorda-prenajom-2-izb-bytu-50-m2-v-novostavbe-s-balkonom-pivnicou-a-parkovacim-miestom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="690" data-ppm2="13.27"
+         data-area="52.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JueqaY68M5j/halo-reality-prenajom-dvojizbovy-byt-banska-bystrica-sasova-tatranska" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/rs9CJ3B-f_fss?st=UZ_gh9KHDTjZZFyY_g5hXaImgY4va9dLpjrqVWb9IZw&amp;ts=1788444345&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-partial" title="z popisu inzerátu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JueqaY68M5j/halo-reality-prenajom-dvojizbovy-byt-banska-bystrica-sasova-tatranska" target="_blank" rel="noopener" class="card-title">HALO reality - Prenájom, dvojizbový byt Banská Bystrica, Sásová, Tatranská</a>
+        <div class="card-price">690 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 52 m² · 13.3 €/m² · Tatranská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JueqaY68M5j/halo-reality-prenajom-dvojizbovy-byt-banska-bystrica-sasova-tatranska" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="690" data-ppm2="10.78"
+         data-area="64.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuYYmOrET0n/prenajom-krasny-byt-v-novostavbe-lokalita-radvan-vedla-kauflandu-dlha-ul" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/7nNsBbDH8_fss?st=8nKeqo-QGiL7IJqAH7nUXHWM70t-jogz4-BEWyt2ImU&amp;ts=1751053609&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuYYmOrET0n/prenajom-krasny-byt-v-novostavbe-lokalita-radvan-vedla-kauflandu-dlha-ul" target="_blank" rel="noopener" class="card-title">Prenájom krásny byt v novostavbe , lokalita Radvaň vedľa Kauflandu Dlhá ul.</a>
+        <div class="card-price">690 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 64 m² · 10.8 €/m² · Dlha</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuYYmOrET0n/prenajom-krasny-byt-v-novostavbe-lokalita-radvan-vedla-kauflandu-dlha-ul" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="690" data-ppm2="9.20"
+         data-area="75.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju2YdflI1L2/2-izbovy-byt-na-prenajom-na-ul-trieda-snp-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/S5_bNzNhg_fss?st=kUvUJTCA6Ts7yNe9jv65uxN1Az_Pl8eFR9T0F3fZ9-g&amp;ts=1779892391&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju2YdflI1L2/2-izbovy-byt-na-prenajom-na-ul-trieda-snp-v-banskej-bystrici" target="_blank" rel="noopener" class="card-title">2 izbový byt na prenájom na ul. Trieda SNP v Banskej Bystrici</a>
+        <div class="card-price">690 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 75 m² · 9.2 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju2YdflI1L2/2-izbovy-byt-na-prenajom-na-ul-trieda-snp-v-banskej-bystrici" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="690" data-ppm2="11.50"
+         data-area="60.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju29nef0FE1/na-prenajom-priestranny-2-izb-byt-s-parkovanim-na-komenskeho-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/XZ0HMlH0n_fss?st=G6jOpe8-IGOnCtl92yMIeupV6SIVhQnccGy7WVZhzUw&amp;ts=1789211932&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju29nef0FE1/na-prenajom-priestranny-2-izb-byt-s-parkovanim-na-komenskeho-banska-bystrica" target="_blank" rel="noopener" class="card-title">Na prenájom: priestranný 2-izb. byt s parkovaním na Komenského, Banská Bystrica</a>
+        <div class="card-price">690 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 60 m² · 11.5 €/m² · Komenského</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju29nef0FE1/na-prenajom-priestranny-2-izb-byt-s-parkovanim-na-komenskeho-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="old" data-total="690" data-ppm2="10.00"
+         data-area="69.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JurVELx-D_O/exkluzivne-na-prenajom-3izbbytu-ulthk-v-b-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/D5y3qdC8L_fss?st=1SPU8dbPHVEBvwrWe-n2S7ofiubjFy4ZvGm2EDj8eAI&amp;ts=1751053641&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-old" title="z popisu inzerátu">Pôvodný stav</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JurVELx-D_O/exkluzivne-na-prenajom-3izbbytu-ulthk-v-b-bystrici" target="_blank" rel="noopener" class="card-title">EXKLUZÍVNE na prenájom 3izb.bytu ul.THK v B. Bystrici</a>
+        <div class="card-price">690 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 69 m² · 10.0 €/m² · THK</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JurVELx-D_O/exkluzivne-na-prenajom-3izbbytu-ulthk-v-b-bystrici" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="690" data-ppm2="10.95"
+         data-area="63.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuIY_f8xB4B/exkluzivne-na-prenajom-slnecny-3-izbovy-byt-s-loggiou-tulska-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/tPFuxNByo_fss?st=rp3GH4vDmYabXcJf0KcZVsPwS3CSMECC2OiRtLpuug8&amp;ts=1786456410&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuIY_f8xB4B/exkluzivne-na-prenajom-slnecny-3-izbovy-byt-s-loggiou-tulska-banska-bystrica" target="_blank" rel="noopener" class="card-title">EXKLUZÍVNE NA PRENÁJOM slnečný 3-izbový byt s loggiou, Tulská, Banská Bystrica</a>
+        <div class="card-price">690 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 63 m² · 11.0 €/m² · Tulská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuIY_f8xB4B/exkluzivne-na-prenajom-slnecny-3-izbovy-byt-s-loggiou-tulska-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="700" data-ppm2="8.80"
+         data-area="54.56" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuHl98t6xVe/prenajom-velkeho-2-izboveho-bytu-banska-bystrica-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/-o9E-6CCM_fss?st=m7eneMJymK6mHFmrH5fEy2BgHS4V-RBEe90QdgwX0MM&amp;ts=1773294109&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie za príplatok</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuHl98t6xVe/prenajom-velkeho-2-izboveho-bytu-banska-bystrica-foncorda" target="_blank" rel="noopener" class="card-title">Prenájom veľkého, 2 izbového bytu Banská Bystrica, Fončorda- REZERVOVANÉ</a>
+        <div class="card-price">480 € <span class="plus">+ 220 € energie</span></div><div class="total-note">celkom ≈ 700 € / mes.</div>
+        
+        <div class="card-meta">2-izbový · 54.56 m² · 8.8 €/m² · Družby</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuHl98t6xVe/prenajom-velkeho-2-izboveho-bytu-banska-bystrica-foncorda" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="700" data-ppm2="10.45"
+         data-area="67.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju7BEQnBOJg/prenajom-2-izboveho-bytu" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/4rhDKL5NO_fss?st=50lMkW_-yhwABY_R-aOGUhhca0Ii50XTUpUXUGNIlUg&amp;ts=1788771756&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju7BEQnBOJg/prenajom-2-izboveho-bytu" target="_blank" rel="noopener" class="card-title">Prenájom 2 izbového bytu- REZERVOVANÉ</a>
+        <div class="card-price">700 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 67 m² · 10.4 €/m² · Kalinčiakova 11</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju7BEQnBOJg/prenajom-2-izboveho-bytu" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="700" data-ppm2="11.59"
+         data-area="60.42" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Jur8oCfb2lO/prenajom-2-izbovy-byt-novostavba-sasova-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/rGu1NQYpF_fss?st=j34CoFqg2ish7sUhfBeyb-HnkwUACWB9uGN4QaHa30M&amp;ts=1776867682&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Jur8oCfb2lO/prenajom-2-izbovy-byt-novostavba-sasova-banska-bystrica" target="_blank" rel="noopener" class="card-title">Prenájom - 2 izbový byt, NOVOSTAVBA, Sásová, Banská Bystrica</a>
+        <div class="card-price">700 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 60.42 m² · 11.6 €/m² · Pieninská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Jur8oCfb2lO/prenajom-2-izbovy-byt-novostavba-sasova-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="700" data-ppm2="11.73"
+         data-area="59.7" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju7GbEknKLQ/prenajom-krasny-zariadeny-2-izbovy-byt-s-balkonom-fortnicka" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/QxgzO0Yvq_fss?st=x_sd4DRIK8ThhcjkpNaJ8KmrYpMYYY97XeEq8xMW4uo&amp;ts=1789394381&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju7GbEknKLQ/prenajom-krasny-zariadeny-2-izbovy-byt-s-balkonom-fortnicka" target="_blank" rel="noopener" class="card-title">PRENÁJOM: KRÁSNY ZARIADENÝ 2 IZBOVÝ BYT S BALKÓNOM, FORTNIČKA</a>
+        <div class="card-price">700 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 59.7 m² · 11.7 €/m² · Martina Rázusa</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju7GbEknKLQ/prenajom-krasny-zariadeny-2-izbovy-byt-s-balkonom-fortnicka" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="700" data-ppm2="10.94"
+         data-area="64.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuXP5nLwhth/prenajom-2-izbovy-byt-centrum-narodna-ul-64m2" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/pOBVRYefo_fss?st=54QE4ykr246aFcQLWPFPmuVaPGLkfJv3ZVlnA4G8PO4&amp;ts=1776068891&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuXP5nLwhth/prenajom-2-izbovy-byt-centrum-narodna-ul-64m2" target="_blank" rel="noopener" class="card-title">Prenájom: 2 izbový byt centrum Národná ul. 64m2</a>
+        <div class="card-price">700 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 64 m² · 10.9 €/m² · Národná</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuXP5nLwhth/prenajom-2-izbovy-byt-centrum-narodna-ul-64m2" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="700" data-ppm2="11.11"
+         data-area="63.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JukpTGETFIU/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Vghzzxv99_fss?st=mttUX774IktEIdIByH6oIamXl8U5XODvR585JnCrzD0&amp;ts=1786639906&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JukpTGETFIU/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-title">Prenájom 2 izbový byt Banská Bystrica</a>
+        <div class="card-price">700 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 63 m² · 11.1 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JukpTGETFIU/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="700" data-ppm2="8.97"
+         data-area="78.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju7Z0vouRB_/prenajom-bytu-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><div class="card-photo card-photo-placeholder">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju7Z0vouRB_/prenajom-bytu-v-banskej-bystrici" target="_blank" rel="noopener" class="card-title">Prenájom bytu v Banskej Bystrici</a>
+        <div class="card-price">700 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 78 m² · 9.0 €/m² · Mládežnícka 37</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju7Z0vouRB_/prenajom-bytu-v-banskej-bystrici" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="700" data-ppm2="9.72"
+         data-area="72.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuIu45KJG_b/prenajom-3-izbovy-rekonstruovany-a-zariadeny-byt-banska-bystrica-ul-kapitana-nalepku" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/MiGlOYn2w_fss?st=98kBOyhqY1Y4UouRuXLXRAntV442GAK8ritpgEaulzE&amp;ts=1789750289&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuIu45KJG_b/prenajom-3-izbovy-rekonstruovany-a-zariadeny-byt-banska-bystrica-ul-kapitana-nalepku" target="_blank" rel="noopener" class="card-title">PRENÁJOM, 3 - izbový rekonštruovaný a zariadený byt Banská Bystrica, ul. Kapitána Nálepku</a>
+        <div class="card-price">700 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 72 m² · 9.7 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuIu45KJG_b/prenajom-3-izbovy-rekonstruovany-a-zariadeny-byt-banska-bystrica-ul-kapitana-nalepku" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="700" data-ppm2="10.14"
+         data-area="69.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Juo75pBHfkF/ponukam-na-prenajom-3-izbovy-byt-v-banskej-bystrici-cast-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/YPcRL0hnp_fss?st=bjKTJqT78fawtBwjgSZLim7SPHfnKPtZBpZFv_KlYLY&amp;ts=1789044605&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Juo75pBHfkF/ponukam-na-prenajom-3-izbovy-byt-v-banskej-bystrici-cast-foncorda" target="_blank" rel="noopener" class="card-title">Ponúkam na prenájom 3-izbový byt v Banskej Bystrici, časť Fončorda</a>
+        <div class="card-price">700 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 69 m² · 10.1 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Juo75pBHfkF/ponukam-na-prenajom-3-izbovy-byt-v-banskej-bystrici-cast-foncorda" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="700" data-ppm2="11.67"
+         data-area="60.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju6Zx_W6CXU/prenajom-cerstvo-zrekonstruovany-byt-60-m2-priamo-v-centre-banskej-bystrice-ul-lazovna" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/fo6nq1wt7_fss?st=KsT0VnIjXQnrYxyrvFDnryFJIEuY6T-i4fDHla0MZNk&amp;ts=1789384381&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju6Zx_W6CXU/prenajom-cerstvo-zrekonstruovany-byt-60-m2-priamo-v-centre-banskej-bystrice-ul-lazovna" target="_blank" rel="noopener" class="card-title">PRENÁJOM Čerstvo zrekonštruovaný byt (60 m²) priamo v centre Banskej Bystrice, ul. Lazovná</a>
+        <div class="card-price">700 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 60 m² · 11.7 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju6Zx_W6CXU/prenajom-cerstvo-zrekonstruovany-byt-60-m2-priamo-v-centre-banskej-bystrice-ul-lazovna" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="700" data-ppm2="10.57"
+         data-area="66.21" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JumD8YZhcAh/3-izbovy-byt-banska-bystrica-moskovska-wwwbbrealitysk" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/HiM15d6c6_fss?st=EW-0UBjD6N3zAsbXScNKX5mMpxF0EiN-9_Dk-B7bbwU&amp;ts=1789127021&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JumD8YZhcAh/3-izbovy-byt-banska-bystrica-moskovska-wwwbbrealitysk" target="_blank" rel="noopener" class="card-title">3-izbový byt, Banská Bystrica, Moskovská www.BBreality.sk</a>
+        <div class="card-price">700 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 66.21 m² · 10.6 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JumD8YZhcAh/3-izbovy-byt-banska-bystrica-moskovska-wwwbbrealitysk" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="700" data-ppm2="10.28"
+         data-area="68.09" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Julymnojq3l/prenajom-svetly-kompletne-zariadeny-3-izbovy-byt-na-moskovskej-ulici-foncorda-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/c_74Eqsqm_fss?st=E1_4QD07TaorbbNv26wgZHxEXxajSosNr-6jCGtr69Q&amp;ts=1788890716&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Julymnojq3l/prenajom-svetly-kompletne-zariadeny-3-izbovy-byt-na-moskovskej-ulici-foncorda-banska-bystrica" target="_blank" rel="noopener" class="card-title">PRENÁJOM Svetlý, kompletne zariadený 3-izbový byt na Moskovskej ulici (Fončorda, Banská Bystrica)</a>
+        <div class="card-price">700 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 68.09 m² · 10.3 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Julymnojq3l/prenajom-svetly-kompletne-zariadeny-3-izbovy-byt-na-moskovskej-ulici-foncorda-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="700" data-ppm2="8.75"
+         data-area="80.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuK2WXsRpA-/ab-estate-na-prenajom-samostatne-izby-v-dobrej-dostupnosti-do-centra-bb" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/uIT1ZuQEN_fss?st=SiUM0REu3DK5vxsiM_9RLMV9ikB9OIKIkagb7_mYD-A&amp;ts=1770123713&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuK2WXsRpA-/ab-estate-na-prenajom-samostatne-izby-v-dobrej-dostupnosti-do-centra-bb" target="_blank" rel="noopener" class="card-title">AB ESTATE na prenájom 3-izbový byt  v dobrej dostupnosti do centra BB</a>
+        <div class="card-price">700 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 80 m² · 8.8 €/m² · Partizánska cesta</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuK2WXsRpA-/ab-estate-na-prenajom-samostatne-izby-v-dobrej-dostupnosti-do-centra-bb" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="720" data-ppm2="8.28"
+         data-area="87.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju1d52jDfHs/2-izbovy-byt-v-rodinnom-dome-so-samostatnym-vchodom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/smqX5P4bI_fss?st=nFVDkiJIbb_C8RJUnDTR0O1uJYwCyRf0Ve-LrXOGelA&amp;ts=1789543356&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie v cene</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju1d52jDfHs/2-izbovy-byt-v-rodinnom-dome-so-samostatnym-vchodom" target="_blank" rel="noopener" class="card-title">2 izbový byt v rodinnom dome so samostatným vchodom</a>
+        <div class="card-price">720 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 87 m² · 8.3 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju1d52jDfHs/2-izbovy-byt-v-rodinnom-dome-so-samostatnym-vchodom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="720" data-ppm2="13.33"
+         data-area="54.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Jua1bN5nNLC/deltaproperty-2izb-byt-s-park-miestom-sirsie-centrum-mesta-banska-bystrica-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/D0sbJ6vHr_fss?st=-DvP7-RPlcG-Ltu_wqGr0uB9wU_RIsCheS-d-Ufu0G4&amp;ts=1788339868&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Jua1bN5nNLC/deltaproperty-2izb-byt-s-park-miestom-sirsie-centrum-mesta-banska-bystrica-prenajom" target="_blank" rel="noopener" class="card-title">DeltaProperty- 2izb. byt s park. miestom širšie centrum mesta Banská Bystrica prenájom</a>
+        <div class="card-price">720 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 54 m² · 13.3 €/m² · Lazovná</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Jua1bN5nNLC/deltaproperty-2izb-byt-s-park-miestom-sirsie-centrum-mesta-banska-bystrica-prenajom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="720" data-ppm2="12.00"
+         data-area="60.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuyAY4VzzvD/moderny-2i-byt-v-centre-mesta" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/jwvGhOdyUg_fss?st=FpdfJs-9m4F-WVe0Fb4axomFOg_aHd0oWA4eUV8PFY0&amp;ts=1790165187&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuyAY4VzzvD/moderny-2i-byt-v-centre-mesta" target="_blank" rel="noopener" class="card-title">Moderný 2i byt v centre mesta</a>
+        <div class="card-price">720 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 60 m² · 12.0 €/m² · Partizánska cesta</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuyAY4VzzvD/moderny-2i-byt-v-centre-mesta" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="720" data-ppm2="10.00"
+         data-area="72.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuAvBeFPraw/kompletne-zariadeny-3-izbovy-byt-na-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/k1zk8oKAG_fss?st=zu1eKeEErpYvGADqwkOOwxm_Et7OYp3pC5EIelDj94Q&amp;ts=1789500667&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuAvBeFPraw/kompletne-zariadeny-3-izbovy-byt-na-prenajom" target="_blank" rel="noopener" class="card-title">Kompletne zariadený 3 izbový byt na prenájom</a>
+        <div class="card-price">720 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 72 m² · 10.0 €/m² · Sitnianska 18</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuAvBeFPraw/kompletne-zariadeny-3-izbovy-byt-na-prenajom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="720" data-ppm2="9.02"
+         data-area="79.8" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuORw-m4Apf/prenajom-nadherny-velky-3-izbovy-byt-s-loggiou-sasova" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/i46Qu6-v__fss?st=epsv9DrA-_O_lRo2qLkeRY6rEWQdyrTNWevp_-uY0KY&amp;ts=1787051652&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuORw-m4Apf/prenajom-nadherny-velky-3-izbovy-byt-s-loggiou-sasova" target="_blank" rel="noopener" class="card-title">PRENÁJOM: NÁDHERNÝ, VEĽKÝ 3 IZBOVÝ BYT S LOGGIOU, SÁSOVÁ</a>
+        <div class="card-price">720 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 79.8 m² · 9.0 €/m² · Krivánska</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuORw-m4Apf/prenajom-nadherny-velky-3-izbovy-byt-s-loggiou-sasova" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="720" data-ppm2="10.00"
+         data-area="72.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuDaURPwzSS/zrekonstruovany-3i-byt-v-sasovej" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/cugfdiwcf_fss?st=MPQZnciLO8tm6-JoHUO8uYiYctM3wrL3kA_2MlO9kOQ&amp;ts=1790275665&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuDaURPwzSS/zrekonstruovany-3i-byt-v-sasovej" target="_blank" rel="noopener" class="card-title">Zrekonštruovaný 3i byt v Sásovej</a>
+        <div class="card-price">720 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 72 m² · 10.0 €/m² · Sitnianska</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuDaURPwzSS/zrekonstruovany-3i-byt-v-sasovej" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="730" data-ppm2="14.60"
+         data-area="50.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuHlJE0lDQj/novostavba-nadstandardny-2-izb-byt-s-parkovacim-miestom-banska-bystrica-ulanka-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/wUh8fFoGZ_fss?st=uhcSnhk0nGYfv-wqoe5rhc63Ds75j-vxB4pUeoWdvA0&amp;ts=1755010420&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuHlJE0lDQj/novostavba-nadstandardny-2-izb-byt-s-parkovacim-miestom-banska-bystrica-ulanka-prenajom" target="_blank" rel="noopener" class="card-title">Novostavba nadštandardný 2 izb. byt s parkovacím miestom Banská Bystrica-Uľanka prenájom</a>
+        <div class="card-price">730 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 50 m² · 14.6 €/m² · Úľanská cesta</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuHlJE0lDQj/novostavba-nadstandardny-2-izb-byt-s-parkovacim-miestom-banska-bystrica-ulanka-prenajom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="750" data-ppm2="8.33"
+         data-area="66.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Juj2tN4t8K7/na-prenajom-priestranny-3-izbovy-byt-pri-kyjevskom-namesti-ihned-volny" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/2vpTaY_1T_fss?st=EkSMn1fCOONwy7Ql41Oyjja3QSsNwGGV4FyzGlarAYA&amp;ts=1788377738&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Juj2tN4t8K7/na-prenajom-priestranny-3-izbovy-byt-pri-kyjevskom-namesti-ihned-volny" target="_blank" rel="noopener" class="card-title">Rezervované!!! NA PRENÁJOM Priestranný 3-izbový byt pri Kyjevskom námestí – ihneď voľný</a>
+        <div class="card-price">550 € <span class="plus">+ 200 € energie</span></div><div class="total-note">celkom ≈ 750 € / mes.</div>
+        
+        <div class="card-meta">3-izbový · 66 m² · 8.3 €/m² · Mládežnícka</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Juj2tN4t8K7/na-prenajom-priestranny-3-izbovy-byt-pri-kyjevskom-namesti-ihned-volny" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="750" data-ppm2="12.50"
+         data-area="60.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuOsmCsCuql/prenajom-2-izb-byt-novostavba-centrum" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/vXy3Pinwr_fss?st=c21VMoLoorrQZxor7WKpu9waPbdbfYVfGg86u15iAyE&amp;ts=1755330887&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuOsmCsCuql/prenajom-2-izb-byt-novostavba-centrum" target="_blank" rel="noopener" class="card-title">Prenájom 2 izb BYT NOVOSTAVBA Centrum</a>
+        <div class="card-price">750 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 60 m² · 12.5 €/m² · Bakossova</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuOsmCsCuql/prenajom-2-izb-byt-novostavba-centrum" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="750" data-ppm2="12.93"
+         data-area="58.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JujYtdlRoSN/prenajate-na-prenajom-2-izbovy-byt-v-novostavbe-na-prsianskej-terase-s-parkovacim-miestom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/nAeslKIAG_fss?st=Mu-FQVboGjYViFipJbLPTPhJX3Il4IyCXs-GfwIzRzY&amp;ts=1751053638&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JujYtdlRoSN/prenajate-na-prenajom-2-izbovy-byt-v-novostavbe-na-prsianskej-terase-s-parkovacim-miestom" target="_blank" rel="noopener" class="card-title">PRENAJATÉ  – na prenájom 2- izbový byt v NOVOSTAVBE na Pršianskej Terase s parkovacím miestom.</a>
+        <div class="card-price">750 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 58 m² · 12.9 €/m² · Medená</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JujYtdlRoSN/prenajate-na-prenajom-2-izbovy-byt-v-novostavbe-na-prsianskej-terase-s-parkovacim-miestom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="750" data-ppm2="12.10"
+         data-area="62.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuehJZ5ndhW/prenajom-2-izbovy-byt-v-centre-mesta-pri-europa-sc" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/-5U81BFx5_fss?st=F2KfsEzHIqo87bYnBfeOkffe-0ltw1x3g3I-wnKI3mc&amp;ts=1763146626&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuehJZ5ndhW/prenajom-2-izbovy-byt-v-centre-mesta-pri-europa-sc" target="_blank" rel="noopener" class="card-title">Prenájom 2 izbový byt v centre mesta pri Europa SC</a>
+        <div class="card-price">750 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 62 m² · 12.1 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuehJZ5ndhW/prenajom-2-izbovy-byt-v-centre-mesta-pri-europa-sc" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="750" data-ppm2="12.10"
+         data-area="62.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuG3vQibg6K/prenajom-2-izbovy-byt-v-centre-bb" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/fPTgCrZ_2_fss?st=XmjH_cwat0jnUYMRvDlhPufgebfCL_Qh1kKhB0B_2No&amp;ts=1789400254&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuG3vQibg6K/prenajom-2-izbovy-byt-v-centre-bb" target="_blank" rel="noopener" class="card-title">Prenájom 2-izbový byt v centre BB</a>
+        <div class="card-price">750 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 62 m² · 12.1 €/m² · M. Rázusa</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuG3vQibg6K/prenajom-2-izbovy-byt-v-centre-bb" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="750" data-ppm2="16.67"
+         data-area="45.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuabODDRtbe/na-prenajom-slnecny-2izbovy-byt-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/ZWBbnRCCO_fss?st=mWt_-zMY1KwmxKXKpujK6lo2S5pQoUP0S40Zmdp4u-8&amp;ts=1788951524&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuabODDRtbe/na-prenajom-slnecny-2izbovy-byt-v-banskej-bystrici" target="_blank" rel="noopener" class="card-title">Na prenájom slnečný 2izbový byt v Banskej Bystrici</a>
+        <div class="card-price">750 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 45 m² · 16.7 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuabODDRtbe/na-prenajom-slnecny-2izbovy-byt-v-banskej-bystrici" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="750" data-ppm2="13.64"
+         data-area="55.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JumnCrMV-Z0/prenajom-kompletne-zrekonstruovany-zariadeny-2-izbovy-byt-uhlisko-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/iG1dbyB_J_fss?st=RQmuqPamVl_E6BDdkRU3EXQL1kT_vYn3KK7JP22uSVg&amp;ts=1784722811&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JumnCrMV-Z0/prenajom-kompletne-zrekonstruovany-zariadeny-2-izbovy-byt-uhlisko-banska-bystrica" target="_blank" rel="noopener" class="card-title">PRENÁJOM | Kompletne zrekonštruovaný, zariadený 2-izbový byt | Uhlisko, Banská Bystrica</a>
+        <div class="card-price">750 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 55 m² · 13.6 €/m² · 9. mája 23</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JumnCrMV-Z0/prenajom-kompletne-zrekonstruovany-zariadeny-2-izbovy-byt-uhlisko-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="750" data-ppm2="9.74"
+         data-area="77.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju0WE9G7_0e/lokalita-sidlisko-prenajom-3-izb-bytu-77-m2-v-novostavbe-s-balkonom-pivnicou-a-vonkajsim-parkovacim-miestom-13-m2" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/TcvabO9eT_fss?st=KXwY-6-qKifDxj6wTj15RZHy7Je7GpCPDIvIXxsuRME&amp;ts=1789152698&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju0WE9G7_0e/lokalita-sidlisko-prenajom-3-izb-bytu-77-m2-v-novostavbe-s-balkonom-pivnicou-a-vonkajsim-parkovacim-miestom-13-m2" target="_blank" rel="noopener" class="card-title">Lokalita Sídlisko – Prenájom 3 izb. bytu (77 m2) v novostavbe s balkónom, pivnicou a vonkajším parkovacím miestom (13 m2)</a>
+        <div class="card-price">750 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 77 m² · 9.7 €/m² · Petelenova</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju0WE9G7_0e/lokalita-sidlisko-prenajom-3-izb-bytu-77-m2-v-novostavbe-s-balkonom-pivnicou-a-vonkajsim-parkovacim-miestom-13-m2" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="750" data-ppm2="10.88"
+         data-area="68.95" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuWjanwETQp/prenajom-slnecny-3-izbovy-byt-s-balkonom-a-parkovanim-centrum" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/wmJJjqrDM_fss?st=x2WNB9QF4JZp7aT_IoRTB6f1RIpAhFPl-9jUXWK7fy0&amp;ts=1787051650&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuWjanwETQp/prenajom-slnecny-3-izbovy-byt-s-balkonom-a-parkovanim-centrum" target="_blank" rel="noopener" class="card-title">PRENÁJOM: SLNEČNÝ 3 IZBOVÝ BYT S BALKÓNOM A PARKOVANÍM, CENTRUM</a>
+        <div class="card-price">750 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 68.95 m² · 10.9 €/m² · Bakossova</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuWjanwETQp/prenajom-slnecny-3-izbovy-byt-s-balkonom-a-parkovanim-centrum" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="750" data-ppm2="10.88"
+         data-area="68.95" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Jul3ud7jvcV/prenajom-slnecny-3-izbovy-byt-s-balkonom-a-parkovanim-centrum" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/o9oQxxUlZ_fss?st=bKuB9Y_Y77SVaSqvWvz5rS2-scbcJ7WOuoQ2ixEiUCI&amp;ts=1783433871&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Jul3ud7jvcV/prenajom-slnecny-3-izbovy-byt-s-balkonom-a-parkovanim-centrum" target="_blank" rel="noopener" class="card-title">PRENÁJOM: SLNEČNÝ 3 IZBOVÝ BYT S BALKÓNOM A PARKOVANÍM, CENTRUM</a>
+        <div class="card-price">750 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 68.95 m² · 10.9 €/m² · Bakossova</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Jul3ud7jvcV/prenajom-slnecny-3-izbovy-byt-s-balkonom-a-parkovanim-centrum" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="750" data-ppm2="9.74"
+         data-area="77.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuMmcVTMepS/sidlisko-snp-3i-byt-tehlovy-rekonstrukcia-77-m2" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/WMrqRme51_fss?st=9s9o6Wg0zS34DUsvo_gPrRGVGyG7nomlwHWuB62Ilwk&amp;ts=1789495280&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Nezariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuMmcVTMepS/sidlisko-snp-3i-byt-tehlovy-rekonstrukcia-77-m2" target="_blank" rel="noopener" class="card-title">SÍDLISKO SNP / 3i byt / TEHLOVÝ / REKONŠTRUKCIA / 77 m2</a>
+        <div class="card-price">750 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 77 m² · 9.7 €/m² · Trieda SNP</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuMmcVTMepS/sidlisko-snp-3i-byt-tehlovy-rekonstrukcia-77-m2" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="750" data-ppm2="10.32"
+         data-area="72.64" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuFtfYwBRhz/na-prenajom-priestranny-3-izbovy-byt-s-balkonom-banska-bystricasasova" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/oU5He-UBY_fss?st=I3owR9_6-Hw07eaSzq0rCtM73hPffN3E7wB9kPQwNLE&amp;ts=1789749850&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuFtfYwBRhz/na-prenajom-priestranny-3-izbovy-byt-s-balkonom-banska-bystricasasova" target="_blank" rel="noopener" class="card-title">Na prenájom priestranný 3-izbový byt s balkónom - Banská Bystrica/Sásová</a>
+        <div class="card-price">750 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 72.64 m² · 10.3 €/m² · Rudohorská 32</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuFtfYwBRhz/na-prenajom-priestranny-3-izbovy-byt-s-balkonom-banska-bystricasasova" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="750" data-ppm2="10.74"
+         data-area="69.8" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JunHTP6hsvs/3-izbovy-byt-na-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/cA4edI3Va_fss?st=QSGDZ8eJkes3MVcTTVLqutVynODvkX-p4bc4yKeLg-s&amp;ts=1789129490&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JunHTP6hsvs/3-izbovy-byt-na-prenajom" target="_blank" rel="noopener" class="card-title">DO DOMČEKA | REZERVOVANÉ Vzdušný 3-izbový byt v pokojnej lokalite</a>
+        <div class="card-price">750 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 69.8 m² · 10.7 €/m² · Krivánska</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JunHTP6hsvs/3-izbovy-byt-na-prenajom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="750" data-ppm2="10.42"
+         data-area="72.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Juwaf-VbqtC/newcastleprenajom-3-izbovy-byt-72m2-logia" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/UGBkPRnzH_fss?st=T4HWWxPD5-BivluXkfOjIiIMPQthLN5lRoH6dlgm0LU&amp;ts=1785922113&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Juwaf-VbqtC/newcastleprenajom-3-izbovy-byt-72m2-logia" target="_blank" rel="noopener" class="card-title">NEWCASTLE | REZERVOVANÉ, 3 izbový byt (72m2) + logia</a>
+        <div class="card-price">750 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 72 m² · 10.4 €/m² · Bernolákova</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Juwaf-VbqtC/newcastleprenajom-3-izbovy-byt-72m2-logia" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="750" data-ppm2="11.54"
+         data-area="65.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Judl_mZJtag/na-prenajom-3-izbovy-byt-blizko-centra-mesta-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/mMHF0nU_Mh_fss?st=GCSW64Z9xf0oRkQW3YMTyNDGTYyZwg_8VS4f0h7iz64&amp;ts=1790151506&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Judl_mZJtag/na-prenajom-3-izbovy-byt-blizko-centra-mesta-banska-bystrica" target="_blank" rel="noopener" class="card-title">Prenájom 3 izbový byt blízko centra mesta Banská Bystrica</a>
+        <div class="card-price">750 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 65 m² · 11.5 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Judl_mZJtag/na-prenajom-3-izbovy-byt-blizko-centra-mesta-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="760" data-ppm2="10.13"
+         data-area="75.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuvHYUUH2d0/2-izbovy-byt-banska-bystrica-tr-snp-75-m2-wwwbbrealitysk" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/bkbOF9tt7_fss?st=VnqaRV6ld9F4t4vK9KflvX-k2mjORADrd27jLNxfg-4&amp;ts=1788957951&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuvHYUUH2d0/2-izbovy-byt-banska-bystrica-tr-snp-75-m2-wwwbbrealitysk" target="_blank" rel="noopener" class="card-title">2-izbový byt, Banská Bystrica, Tr. SNP, 75 m2 www.bbreality.sk</a>
+        <div class="card-price">760 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 75 m² · 10.1 €/m² · Trieda SNP 21</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuvHYUUH2d0/2-izbovy-byt-banska-bystrica-tr-snp-75-m2-wwwbbrealitysk" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="760" data-ppm2="11.95"
+         data-area="63.59" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Juo1nwWBUoc/prenajom-2-izbovy-byt-v-banskej-bystrici-ul-bernolakova" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/h_Sc-u_xa_fss?st=PIeVV3jVHQd71jBy52t1WoXyXh1WiiUj6MP9Xikx5CY&amp;ts=1784923649&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Juo1nwWBUoc/prenajom-2-izbovy-byt-v-banskej-bystrici-ul-bernolakova" target="_blank" rel="noopener" class="card-title">PRENÁJOM 2-izbový byt v Radvani, ul. Bernolákova, Banská Bystrica</a>
+        <div class="card-price">760 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 63.59 m² · 12.0 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Juo1nwWBUoc/prenajom-2-izbovy-byt-v-banskej-bystrici-ul-bernolakova" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="760" data-ppm2="8.79"
+         data-area="86.45" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuJK76F-EPN/prenajom-krasny-velky-3-izbovy-byt-s-balkonom-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/xOjr2u4cn_fss?st=4N5yl2sqVLTvzPXF_pPbXbJCxvZT0EPduSPqpjkMTvE&amp;ts=1789548674&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuJK76F-EPN/prenajom-krasny-velky-3-izbovy-byt-s-balkonom-foncorda" target="_blank" rel="noopener" class="card-title">PRENÁJOM: KRÁSNY, VEĽKÝ 3 IZBOVÝ BYT S BALKÓNOM, FONČORDA</a>
+        <div class="card-price">760 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 86.45 m² · 8.8 €/m² · Moskovská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuJK76F-EPN/prenajom-krasny-velky-3-izbovy-byt-s-balkonom-foncorda" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="770" data-ppm2="11.00"
+         data-area="70.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuZhtxc2Nso/ab-estate-kompletne-zariadeny-3-izbovy-byt-v-sasovej-na-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/WktcmSZ0e_fss?st=wnDA65uJghOsQhV2jNVtsy-xCTFWJA9qqFBhM1rt8cA&amp;ts=1790020741&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuZhtxc2Nso/ab-estate-kompletne-zariadeny-3-izbovy-byt-v-sasovej-na-prenajom" target="_blank" rel="noopener" class="card-title">AB ESTATE/ Kompletne zariadený 3-IZBOVÝ BYT V SÁSOVEJ NA PRENÁJOM</a>
+        <div class="card-price">770 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 70 m² · 11.0 €/m² · Magurská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuZhtxc2Nso/ab-estate-kompletne-zariadeny-3-izbovy-byt-v-sasovej-na-prenajom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="770" data-ppm2="10.55"
+         data-area="73.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JulbCp-knmW/prenajom-novozrekonstruovaneho-3-izboveho-bytu" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/l0dg5j4EJ_fss?st=MWS789ejuspdfsp_SxW09HhftUo3ZlX7aX5Mpf3n6ys&amp;ts=1786353535&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Nezariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JulbCp-knmW/prenajom-novozrekonstruovaneho-3-izboveho-bytu" target="_blank" rel="noopener" class="card-title">Prenájom novozrekonštruovaného 3 izbového bytu</a>
+        <div class="card-price">770 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 73 m² · 10.5 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JulbCp-knmW/prenajom-novozrekonstruovaneho-3-izboveho-bytu" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="780" data-ppm2="15.60"
+         data-area="50.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JudkxFUxbxp/na-prenajom-2-izbovy-byt-v-novostavbe-v-mestskej-casti-ulanka" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/3fEtCQZvX_fss?st=0iz46elStMR61_br7nnZM9jHA-9SDiWAusVHqsEqAUY&amp;ts=1788624159&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JudkxFUxbxp/na-prenajom-2-izbovy-byt-v-novostavbe-v-mestskej-casti-ulanka" target="_blank" rel="noopener" class="card-title">Na prenájom 2-izbový byt v novostavbe v mestskej časti Uľanka</a>
+        <div class="card-price">780 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 50 m² · 15.6 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JudkxFUxbxp/na-prenajom-2-izbovy-byt-v-novostavbe-v-mestskej-casti-ulanka" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="780" data-ppm2="15.00"
+         data-area="52.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju65WfApyLj/hd-reality-prenajom-novostavba-moderny-2-izbovy-byt-v-sukromnej-bytovke-ulanka-5-minut-od-centra" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/s5ZDXMp25_fss?st=3E3T5PBGA8GfmvHoT2I67GKeDhAkthcwGmsWkxX2-nY&amp;ts=1788552581&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju65WfApyLj/hd-reality-prenajom-novostavba-moderny-2-izbovy-byt-v-sukromnej-bytovke-ulanka-5-minut-od-centra" target="_blank" rel="noopener" class="card-title">HD REALITY, PRENÁJOM, NOVOSTAVBA - MODERNÝ 2-IZBOVÝ BYT V SÚKROMNEJ BYTOVKE – UĽANKA, 5 MINÚT OD CENTRA</a>
+        <div class="card-price">780 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 52 m² · 15.0 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju65WfApyLj/hd-reality-prenajom-novostavba-moderny-2-izbovy-byt-v-sukromnej-bytovke-ulanka-5-minut-od-centra" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="780" data-ppm2="15.60"
+         data-area="50.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju2TdN5nhjV/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/yNJKslH2F_fss?st=zCgN-V6p3Rh44JmB4Se5Qojyx4rH8w_FIibAuDjrciI&amp;ts=1789412024&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju2TdN5nhjV/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-title">Prenájom 2 izbový byt Banská Bystrica</a>
+        <div class="card-price">780 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 50 m² · 15.6 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju2TdN5nhjV/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="780" data-ppm2="10.54"
+         data-area="74.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuB4c9xllbV/prenajom-priestranneho-3-izboveho-bytu-s-balkonom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Gsy5YmFYK_fss?st=0A7lxe_MgSzDtYglBnctovMZoqlZgtLC03jFbhKMQcE&amp;ts=1788257416&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuB4c9xllbV/prenajom-priestranneho-3-izboveho-bytu-s-balkonom" target="_blank" rel="noopener" class="card-title">Prenájom priestranného 3-izbového bytu s balkónom</a>
+        <div class="card-price">780 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 74 m² · 10.5 €/m² · Tatranská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuB4c9xllbV/prenajom-priestranneho-3-izboveho-bytu-s-balkonom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="780" data-ppm2="10.54"
+         data-area="74.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Ju4U9LIVIRL/3-izbovy-byt-s-balkonom-na-prenajom-v-banskej-bystrici-sasovej-tatranska-ulica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/_ozLzo16S_fss?st=T19GE13G6m3eazC_vNEzU39txImpHujmxWfm8nHd2Gs&amp;ts=1788461262&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Ju4U9LIVIRL/3-izbovy-byt-s-balkonom-na-prenajom-v-banskej-bystrici-sasovej-tatranska-ulica" target="_blank" rel="noopener" class="card-title">3-izbový byt s balkónom na prenájom v Banskej Bystrici – Sásovej - Tatranská ulica</a>
+        <div class="card-price">780 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 74 m² · 10.5 €/m² · Sásová</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Ju4U9LIVIRL/3-izbovy-byt-s-balkonom-na-prenajom-v-banskej-bystrici-sasovej-tatranska-ulica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="780" data-ppm2="10.54"
+         data-area="74.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JurkqAa4j3Q/prenajom-3-izboveho-bytu-s-balkonom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/P6QLQQejX_fss?st=eYDozODsLwjfD9wjFOsvLf4xGBCRPlj_E9aiipEVQiI&amp;ts=1789662004&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JurkqAa4j3Q/prenajom-3-izboveho-bytu-s-balkonom" target="_blank" rel="noopener" class="card-title">Prenájom 3-izbového bytu s balkónom</a>
+        <div class="card-price">780 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 74 m² · 10.5 €/m² · Tatranská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JurkqAa4j3Q/prenajom-3-izboveho-bytu-s-balkonom" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-total="780" data-ppm2="11.18"
+         data-area="69.76" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuGpeV5w3Kh/na-prenajom-3-izbovy-byt-na-starohorskej-ulici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/EImSQYPgv_fss?st=Pe_NOg3Lg7Abe-m6Q7DnL_JvO2wEzcivYxJSlNZIilo&amp;ts=1789660333&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-unknown" title="inzerát stav nespomína">Stav neuvedený</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuGpeV5w3Kh/na-prenajom-3-izbovy-byt-na-starohorskej-ulici" target="_blank" rel="noopener" class="card-title">NA PRENÁJOM  3 IZBOVÝ BYT NA STAROHORSKEJ ULICI</a>
+        <div class="card-price">780 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 69.76 m² · 11.2 €/m² · Starohorská  18</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuGpeV5w3Kh/na-prenajom-3-izbovy-byt-na-starohorskej-ulici" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="800" data-ppm2="17.95"
+         data-area="44.56" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuuVZNxEypV/rezervovane-2-izbovy-byt-na-prenajom-belveder-s-garazovym-statim" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL3JzZg==/a34DbXSa5_fss?st=PAj-fPGV1xMuZS-fPj9M74fOLRJl5z2-EjoQw_fPDzc&amp;ts=1721381694&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuuVZNxEypV/rezervovane-2-izbovy-byt-na-prenajom-belveder-s-garazovym-statim" target="_blank" rel="noopener" class="card-title">2 izbový byt na prenájom - Belveder s garážovým státím</a>
+        <div class="card-price">800 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">2-izbový · 44.56 m² · 18.0 €/m² · Nad plážou 3</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuuVZNxEypV/rezervovane-2-izbovy-byt-na-prenajom-belveder-s-garazovym-statim" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="800" data-ppm2="0.00"
+         data-area="0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuhZDXes2bX/dlhodoby-najom-trojizbovy-byt-tulska" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Qit1iDatA_fss?st=iGdJgpTOmAHmRjWQU40kmEgHShyaiUXLBsQWQpOSykU&amp;ts=1790239851&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuhZDXes2bX/dlhodoby-najom-trojizbovy-byt-tulska" target="_blank" rel="noopener" class="card-title">Dlhodobý nájom trojizbový byt Tulská</a>
+        <div class="card-price">800 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · Tulská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuhZDXes2bX/dlhodoby-najom-trojizbovy-byt-tulska" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="800" data-ppm2="12.50"
+         data-area="64.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuvJylHq1d-/pripravujeme-na-prenajom-od-122026-exkluzivne-3-izbovy-byt-na-foncorde" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/xSjGyEF4f_fss?st=dbrDT8IlbKHqewXltXqOh7l0G10EcsRXDkLfkRxDIZc&amp;ts=1763931008&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span><span class="badge badge-info">Panelák</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuvJylHq1d-/pripravujeme-na-prenajom-od-122026-exkluzivne-3-izbovy-byt-na-foncorde" target="_blank" rel="noopener" class="card-title">PRIPRAVUJEME NA PRENÁJOM : OD 1.7.2026 - EXKLUZÍVNE 3 IZBOVY BYT NA FONČORDE</a>
+        <div class="card-price">800 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 64 m² · 12.5 €/m² · Tulská</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuvJylHq1d-/pripravujeme-na-prenajom-od-122026-exkluzivne-3-izbovy-byt-na-foncorde" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="800" data-ppm2="9.88"
+         data-area="81.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JueYA4hjYAA/na-prenajom-nadstandardne-zariadeny-byt-s-dvoma-garazovymi-statiami-v-novostavbe-na-prsianskej-terase" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Y978zCugF_fss?st=XeG7U2YbHeS0fstr7CVM2Y67kK1YbkS3QkGkSbFjeu0&amp;ts=1770813928&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JueYA4hjYAA/na-prenajom-nadstandardne-zariadeny-byt-s-dvoma-garazovymi-statiami-v-novostavbe-na-prsianskej-terase" target="_blank" rel="noopener" class="card-title">NA PRENÁJOM nadštandardne zariadený byt s dvoma garážovými státiami v NOVOSTAVBE na Pršianskej Terase</a>
+        <div class="card-price">800 € <span class="plus dim">energie neuvedené</span></div>
+        
+        <div class="card-meta">3-izbový · 81 m² · 9.9 €/m² · Bronzova</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JueYA4hjYAA/na-prenajom-nadstandardne-zariadeny-byt-s-dvoma-garazovymi-statiami-v-novostavbe-na-prsianskej-terase" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="800" data-ppm2="11.59"
+         data-area="69.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuAzeSrgA_e/3-izbovy-byt-po-kompletnej-rekonstrukcii-na-prenajom-tulska-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/TaBbkoHId_fss?st=E-RcXruVmeusR-UJj0ebud3cNWFPIg5yN3V5IbtVTYM&amp;ts=1788356930&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuAzeSrgA_e/3-izbovy-byt-po-kompletnej-rekonstrukcii-na-prenajom-tulska-banska-bystrica" target="_blank" rel="noopener" class="card-title">NEWCASTLE | REZERVOVANÉ, 3-izbový byt po kompletnej rekonštrukcii, Tulská, BB</a>
+        <div class="card-price">800 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 69 m² · 11.6 €/m² · Tulská 14</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuAzeSrgA_e/3-izbovy-byt-po-kompletnej-rekonstrukcii-na-prenajom-tulska-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="800" data-ppm2="11.35"
+         data-area="70.5" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JudTAUdO-kn/prenajom-troj-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/2Uf0fJ_9L_fss?st=rZpZfFch8QYhtwKMcxdakZVOT1lYiaZib454syjCMRw&amp;ts=1784289782&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JudTAUdO-kn/prenajom-troj-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-title">Prenájom troj izbový byt Banská Bystrica</a>
+        <div class="card-price">800 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">3-izbový · 70.5 m² · 11.3 €/m²</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JudTAUdO-kn/prenajom-troj-izbovy-byt-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="900" data-ppm2="11.11"
+         data-area="63.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuOwY6WTlhp/2-izbovy-byt-po-rekonstrukcii-na-prenajom-63-m2-29-augusta-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/H78Eybl0E_fss?st=WfhVzKbewCj0cwsf6CIDcLaoISBrCZ7OFs0-vbBKEGw&amp;ts=1789388240&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuOwY6WTlhp/2-izbovy-byt-po-rekonstrukcii-na-prenajom-63-m2-29-augusta-banska-bystrica" target="_blank" rel="noopener" class="card-title">2-izbový byt po rekonštrukcii na prenájom – 63 m², 29. augusta, Banská Bystrica</a>
+        <div class="card-price">700 € <span class="plus">+ 200 € energie</span></div><div class="total-note">celkom ≈ 900 € / mes.</div>
+        
+        <div class="card-meta">2-izbový · 63 m² · 11.1 €/m² · 29. augusta 29</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuOwY6WTlhp/2-izbovy-byt-po-rekonstrukcii-na-prenajom-63-m2-29-augusta-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="980" data-ppm2="13.79"
+         data-area="58.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/JuvathsD90K/prenajom-moderneho-2-izboveho-bytu-v-novostavbe-lazovna-ulica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/1bvecB7kJ_fss?st=RUqjwD1dXJ0iVXQMMVZEd5rspK-vfQDI83uwK57xp98&amp;ts=1789891299&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-new" title="z popisu inzerátu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuvathsD90K/prenajom-moderneho-2-izboveho-bytu-v-novostavbe-lazovna-ulica" target="_blank" rel="noopener" class="card-title">PRENÁJOM MODERNÉHO 2-IZBOVÉHO BYTU V NOVOSTAVBE – LAZOVNÁ ULICA</a>
+        <div class="card-price">800 € <span class="plus">+ 180 € energie</span></div><div class="total-note">celkom ≈ 980 € / mes.</div>
+        
+        <div class="card-meta">2-izbový · 58 m² · 13.8 €/m² · Lazovná</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuvathsD90K/prenajom-moderneho-2-izboveho-bytu-v-novostavbe-lazovna-ulica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="good" data-total="1000" data-ppm2="4.04"
+         data-area="198.0" data-first="1790353801">
+      <a href="https://www.nehnutelnosti.sk/detail/Jute1F91lPR/prenajom-3izboveho-mezonetoveho-bytu-na-pesej-zone-lazovna-ulica-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/oTTEvYmsL_fss?st=cL60WULklmiRNoZJfIuCMpkP3XNlv7MMQAbtTG5aE2s&amp;ts=1744283194&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-renovated" title="z popisu inzerátu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/Jute1F91lPR/prenajom-3izboveho-mezonetoveho-bytu-na-pesej-zone-lazovna-ulica-banska-bystrica" target="_blank" rel="noopener" class="card-title">Prenájom 3izbového  mezonetového bytu na pešej zóne – Lazovná ulica – Banská Bystrica</a>
+        <div class="card-price">800 € <span class="plus">+ 200 € energie</span></div><div class="total-note">celkom ≈ 1 000 € / mes.</div>
+        
+        <div class="card-meta">3-izbový · 198 m² · 4.0 €/m² · Lazovná</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/Jute1F91lPR/prenajom-3izboveho-mezonetoveho-bytu-na-pesej-zone-lazovna-ulica-banska-bystrica" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-25 · naposledy 2026-09-25</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="empty" class="empty-state" style="display:none;">Žiadne inzeráty v tomto filtri.</div>
+
+<script>
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  const cards = Array.from(grid.children);
+  let currentFilter = 'good';
+  // Predvolený smer: cena/€/m² vzostupne, plocha a "najnovšie" zostupne.
+  const sortState = { field: 'total', asc: true };
+  const DEFAULT_ASC = { total: true, ppm2: true, area: false, first: false };
+
+  function applyFilter() {
+    let visible = 0;
+    cards.forEach(c => {
+      const show = currentFilter === 'all' || c.dataset.cat === currentFilter;
+      c.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    empty.style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  function applySort() {
+    const value = c => parseFloat(c.dataset[sortState.field]) || 0;
+    // Karty bez údaja (0) idú na koniec pri vzostupnom radení.
+    cards.slice().sort((a, b) => {
+      const va = value(a), vb = value(b);
+      if (sortState.asc && (va === 0 || vb === 0) && va !== vb) return va === 0 ? 1 : -1;
+      return sortState.asc ? va - vb : vb - va;
+    }).forEach(c => grid.appendChild(c));
+  }
+
+  function updateSortLabels() {
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      const active = btn.dataset.field === sortState.field;
+      btn.classList.toggle('sort-btn-active', active);
+      btn.textContent = btn.textContent.replace(/ [↑↓]$/, '') + (active ? (sortState.asc ? ' ↑' : ' ↓') : '');
+    });
+  }
+
+  document.querySelectorAll('.filter-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    applyFilter();
+  }));
+
+  document.querySelectorAll('.sort-btn').forEach(btn => btn.addEventListener('click', () => {
+    if (sortState.field === btn.dataset.field) sortState.asc = !sortState.asc;
+    else { sortState.field = btn.dataset.field; sortState.asc = DEFAULT_ASC[btn.dataset.field]; }
+    updateSortLabels(); applySort();
+  }));
+
+  updateSortLabels(); applySort(); applyFilter();
+</script>
+</body>
+</html>
