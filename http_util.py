@@ -46,16 +46,19 @@ def _sleep():
     time.sleep(config.REQUEST_DELAY_SECONDS)
 
 
-def fetch(url: str, log_prefix: str = "") -> Page:
-    """GET s throttlingom. 403/429 = okamžitý SourceError('blocked') bez opakovania. 5xx/timeout: 1 opakovanie."""
-    for attempt in (1, 2):
+def fetch(url: str, log_prefix: str = "", attempts: int = 2) -> Page:
+    """
+    GET s throttlingom. 403/429 = okamžitý SourceError('blocked') bez opakovania.
+    Timeout/5xx: opakuje sa do `attempts` pokusov (predvolene 2, s 10 s pauzou).
+    """
+    for attempt in range(1, attempts + 1):
         _sleep()
         started = time.time()
         try:
             resp = requests.get(url, headers=HEADERS, timeout=config.REQUEST_TIMEOUT_SECONDS)
         except requests.RequestException as e:
             print(f"{log_prefix} sieťová chyba ({type(e).__name__}) pri {url} [pokus {attempt}]")
-            if attempt == 2:
+            if attempt == attempts:
                 raise SourceError("network", f"{type(e).__name__}: {e}") from e
             time.sleep(10)
             continue
@@ -66,7 +69,7 @@ def fetch(url: str, log_prefix: str = "") -> Page:
         if resp.status_code in (403, 429):
             raise SourceError("blocked", f"HTTP {resp.status_code} pri {url} "
                                          f"(začiatok odpovede: {resp.text[:160]!r})")
-        if resp.status_code >= 500 and attempt == 1:
+        if resp.status_code >= 500 and attempt < attempts:
             time.sleep(10)
             continue
         if resp.status_code != 200:

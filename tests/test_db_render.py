@@ -75,6 +75,102 @@ class DbTests(unittest.TestCase):
             self.assertEqual(db.get_listing(conn, db.make_id("nehnutelnosti_sk", "JuAAA"))["status"], "removed")
 
 
+class DetailAndFilterTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.path = os.path.join(self.tmp, "t.db")
+        db.init_db(self.path)
+
+    def _module(self, listings, detail_fn, required=True):
+        class Mod:
+            SOURCE_NAME, LABEL, REQUIRED = "nehnutelnosti_sk", "nehnutelnosti.sk", required
+            calls = []
+
+            @staticmethod
+            def fetch_all(rooms):
+                return [dict(l) for l in listings]
+
+            @staticmethod
+            def fetch_detail(url):
+                Mod.calls.append(url)
+                return detail_fn(url)
+        return Mod
+
+    def test_rejections(self):
+        r = scraper.rejection_reason
+        self.assertIn("prenajat", (r(sample(title="PRENAJATÉ - Na prenájom veľký 2-izbový byt")) or "").lower() + "prenajat")
+        self.assertEqual(r(sample(title="PRENAJATÉ - Na prenájom veľký 2-izbový byt")), "už prenajatý")
+        self.assertIsNone(r(sample(title="Prenajmeme veľký 3-izb byt", rooms=3, area_m2=80.0)))
+        self.assertIsNone(r(sample(title="REZERVOVANÉ - byt")))
+        self.assertEqual(r(sample(title="Zrekonštruovaný 1,5i byt v Radvani")), "1,5-izbový byt")
+        self.assertIn("plocha", r(sample(title="Byt", area_m2=25.0)))
+        self.assertIsNone(r(sample(title="Byt", area_m2=None)))     # bez plochy sa neodmieta
+
+    def test_detail_fetched_once_then_cached(self):
+        detail = lambda url: {"condition_label": "Novostavba", "condition_candidates": ["Novostavba"], "energy_included": True}
+        mod = self._module([sample(portal_id="JuA", condition_source=None)], detail)
+        with db.connect(self.path) as conn:
+            scraper.process_source(mod, conn)
+            row = db.get_listing(conn, "nehnutelnosti_sk:JuA")
+            self.assertEqual((row["condition"], row["condition_source"], row["energy_included"]), ("new", "structured", 1))
+            self.assertEqual(row["structured_condition"], "Novostavba")
+            self.assertTrue(row["detail_checked_at"])
+            scraper.process_source(mod, conn)          # druhý beh - detail sa nesťahuje znova
+            self.assertEqual(len(mod.calls), 1)
+            row = db.get_listing(conn, "nehnutelnosti_sk:JuA")
+            self.assertEqual((row["condition"], row["condition_source"]), ("new", "structured"))   # cache prežila výpis
+
+    def test_blocked_detail_stops_fetching_but_keeps_listings(self):
+        def boom(url):
+            raise SourceError("blocked", "HTTP 403")
+        mod = self._module([sample(portal_id="JuA"), sample(portal_id="JuB", title="Iný")], boom)
+        with db.connect(self.path) as conn:
+            status, stats = scraper.process_source(mod, conn)
+            self.assertEqual(status, "ok")
+            self.assertEqual(stats["new"], 2)
+            self.assertEqual(len(mod.calls), 1)        # po prvom blokovaní sa už nepokračuje
+            self.assertIsNone(db.get_listing(conn, "nehnutelnosti_sk:JuA")["detail_checked_at"])   # skúsi sa znova
+
+    def test_migration_adds_columns_to_old_db(self):
+        import sqlite3
+        old = os.path.join(self.tmp, "old.db")
+        c = sqlite3.connect(old)
+        # Stará schéma = dnešná bez 4 nových stĺpcov (tak vyzerá DB, ktorú už vytvoril prvý beh na GitHube).
+        new_cols = ("availability", "structured_condition", "structured_energy", "detail_checked_at")
+        old_schema = "\n".join(l for l in db.SCHEMA.splitlines() if not l.strip().startswith(new_cols))
+        c.executescript(old_schema)
+        c.execute("INSERT INTO listings (id, source, portal_id, url, title, first_seen_at, last_seen_at) "
+                  "VALUES ('x:1', 'x', '1', 'u', 't', 'a', 'b')")
+        c.commit(); c.close()
+        db.init_db(old); db.init_db(old)               # opakovane bezpečné
+        with db.connect(old) as conn:
+            cols = {r["name"] for r in conn.execute("PRAGMA table_info(listings)")}
+            n = conn.execute("SELECT COUNT(*) FROM listings").fetchone()[0]
+        self.assertTrue({"availability", "structured_condition", "structured_energy", "detail_checked_at"} <= cols)
+        self.assertEqual(n, 1)                         # existujúce dáta ostali
+
+    def test_exit_code_optional_vs_required(self):
+        import unittest.mock as mock
+
+        def mod(name, required, ok):
+            class M:
+                SOURCE_NAME, LABEL, REQUIRED = name, name, required
+
+                @staticmethod
+                def fetch_all(rooms):
+                    if not ok:
+                        raise SourceError("network", "timeout")
+                    return []
+            return M
+
+        def run(*mods):
+            with mock.patch.object(scraper, "SOURCES", list(mods)), mock.patch.object(config, "DB_PATH", self.path):
+                return scraper.main()
+        self.assertEqual(run(mod("a", True, True), mod("b", False, False)), 0)   # nepovinný spadol -> 0
+        self.assertEqual(run(mod("a", True, False), mod("b", False, True)), 1)   # povinný spadol -> 1
+        self.assertEqual(run(mod("a", True, False), mod("b", False, False)), 1)  # všetko spadlo -> 1
+
+
 class RenderTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -103,16 +199,53 @@ class RenderTests(unittest.TestCase):
 
     def test_categories_and_failed_run_banner(self):
         with db.connect(self.path) as conn:
-            db.upsert_listing(conn, sample(portal_id="J1", condition="new"))
-            db.upsert_listing(conn, sample(portal_id="J2", condition="old"))
-            db.upsert_listing(conn, sample(portal_id="J3", condition="unknown"))
-            db.record_source_run(conn, "nehnutelnosti_sk", "ok", 3, None)
-            db.record_source_run(conn, "reality_sk", "blocked", None, "HTTP 403 pri https://x")
+            db.upsert_listing(conn, sample(portal_id="J1", condition="new", title="Byt A"))
+            db.upsert_listing(conn, sample(portal_id="J2", condition="old", title="Byt B"))
+            db.upsert_listing(conn, sample(portal_id="J3", condition="unknown", title="Byt C"))
+            db.record_source_run(conn, "nehnutelnosti_sk", "blocked", None, "HTTP 403 pri https://x")
+            db.record_source_run(conn, "reality_sk", "network", None, "ConnectTimeout")
         page = render.render(self.path, self.out)
         self.assertIn("Novostavba / rekonštrukcia (1)", page)
         self.assertIn("Neistý stav (1)", page)
         self.assertIn("Pôvodný stav (1)", page)
-        self.assertIn("ZLYHALO (blocked)", page)
+        self.assertIn("ZLYHALO (blocked)", page)          # povinný zdroj = červený pruh
+        self.assertIn("reality.sk: nedostupný (network", page)   # nepovinný = len poznámka
+        self.assertEqual(page.count("run-problem\">"), 1)
+
+    def test_optional_source_failure_is_not_a_red_banner(self):
+        with db.connect(self.path) as conn:
+            db.upsert_listing(conn, sample(portal_id="J1"))
+            db.record_source_run(conn, "nehnutelnosti_sk", "ok", 1, None)
+            db.record_source_run(conn, "reality_sk", "network", None, "ConnectTimeout")
+        page = render.render(self.path, self.out)
+        self.assertNotIn('class="run-status run-problem"', page)
+        self.assertIn("nepovinný zdroj", page)
+
+    def test_fuzzy_duplicate_merged_but_different_flats_not(self):
+        with db.connect(self.path) as conn:
+            db.upsert_listing(conn, sample(portal_id="JdupA", title="Pekný byt", price=700.0))
+            db.upsert_listing(conn, sample(portal_id="JdupB", title="Pekný byt", price=700.0))
+            db.upsert_listing(conn, sample(portal_id="Jother", title="Pekný byt", price=650.0))   # iná cena
+            db.upsert_listing(conn, sample(portal_id="JbigA", title="Pekný byt", price=700.0, area_m2=70.0))  # iná plocha
+        page = render.render(self.path, self.out)
+        self.assertEqual(page.count('class="card"'), 3)
+        self.assertIn("možný duplikát", page)
+        self.assertIn("(#2)", page)
+
+    def test_reserved_badge_and_no_fresh_badge_on_seed_day(self):
+        with db.connect(self.path) as conn:
+            db.upsert_listing(conn, sample(portal_id="J1", title="REZERVOVANÉ - byt", availability="reserved"))
+        page = render.render(self.path, self.out)
+        self.assertIn("Rezervované", page)
+        self.assertNotIn(">NOVÉ<", page)     # prvý (seed) deň sa NOVÉ nezobrazuje
+
+    def test_fresh_badge_after_seed_day(self):
+        with db.connect(self.path) as conn:
+            db.upsert_listing(conn, sample(portal_id="Jold", title="Starý"))
+            db.upsert_listing(conn, sample(portal_id="Jnew", title="Nový"))
+            conn.execute("UPDATE listings SET first_seen_at = '2020-01-01T00:00:00+00:00' WHERE portal_id = 'Jold'")
+        page = render.render(self.path, self.out)
+        self.assertEqual(page.count(">NOVÉ<"), 1)
 
     def test_removed_goes_to_removed_tab_with_last_price(self):
         with db.connect(self.path) as conn:

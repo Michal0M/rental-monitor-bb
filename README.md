@@ -16,7 +16,7 @@ statickú HTML stránku (`docs/index.html`) publikovanú cez GitHub Pages. Rovna
 
 Súbory: `config.py` (kritériá) · `nehnutelnosti_scraper.py`, `reality_scraper.py` (parsery) ·
 `textutils.py` (extrakcia z textu) · `http_util.py` (sťahovanie, detekcia blokovania) · `db.py` · `render.py` ·
-`tests/` (39 testov na reálnych kartách uložených ako fixtures).
+`tests/` (52 testov, časť na reálnych kartách a reálnych meta popisoch detailov).
 
 ## Prvotné nastavenie
 
@@ -44,15 +44,23 @@ Súbory: `config.py` (kritériá) · `nehnutelnosti_scraper.py`, `reality_scrape
 | `PRICE_MIN` / `PRICE_MAX` | 400 / 800 € | tvrdý filter na **inzerovanú** cenu, nie na cenu s energiami |
 | Stav bytu | mäkký filter | záložky, nič sa nemaže |
 
-**Stav bytu** (novostavba/rekonštrukcia, nie "pôvodný"): reality.sk má štruktúrované pole
-*Stav nehnuteľnosti* (Novostavba / Kompletná rekonštrukcia / Čiastočná rekonštrukcia / Pôvodný stav).
-Nehnutelnosti.sk ho vo výpise nemá, tam sa stav hádže z textu (`novostavb`, `rekonštruk`, `pôvodný stav`...).
-Ak sa byt nájde na oboch, vyhráva štruktúrované pole. Záložky: *Novostavba / rekonštrukcia*,
+**Stav bytu** (novostavba/rekonštrukcia, nie "pôvodný"): nehnutelnosti.sk ho vo výpise nemá, ale **detail
+inzerátu** ho má v `<meta name="description">` (Novostavba / Kompletná rekonštrukcia / Čiastočná rekonštrukcia /
+Pôvodný stav; rovnaké hodnoty ako pole *Stav nehnuteľnosti* na reality.sk) a cenový riadok tam obsahuje
+"s energiami", ak sú energie v cene. Scraper stiahne detail **len pre nové inzeráty** a potom raz za
+`DETAIL_REFRESH_DAYS` (14) dní, max `DETAIL_MAX_PER_RUN` (120) za beh; údaje sa cacheujú v DB. Prvý beh po
+tejto zmene stiahne ~90 detailov (4 s pauza = ~6-10 min), ďalšie behy len pár. Ak inzerát štítok stavu
+nemá (inzerent ho nevyplnil), stav sa hádže z textu. Neznámy štítok sa zaloguje ("neznámy štítok stavu").
+Ak by detail vrátil 403, ďalšie detaily sa v behu nesťahujú a výpis funguje ďalej s textovým odhadom.
+Ak je byt aj na reality.sk, vyhráva štruktúrované pole. Záložky: *Novostavba / rekonštrukcia*,
 *Neistý stav* (čiastočná rekonštrukcia alebo inzerát stav nespomína), *Pôvodný stav*.
 
 **Energie:** inzeráty typu "750 € + 80 € energie" prejdú filtrom (filtruje sa na 750). Ak sa suma energií
 dá vyčítať z textu, karta ukáže `celkom ≈ 830 €` a dá sa podľa nej radiť. Reálny príklad z 25.9.2026:
 "800 € nájom a 180 € energie" = 980 €.
+
+**Ďalšie filtre:** `PRENAJATÉ` v titulku = vyradené; `REZERVOVANÉ` = zostane so žltým odznakom; "1,5i byt"
+sa nepočíta za 2-izbový; minimálna plocha `MIN_AREA_M2` (2-izb. 35 m², 3-izb. 50 m²; inzerát bez plochy sa nevyradí).
 
 **Parkovanie** nie je kritérium, len badge: *v cene* / *za príplatok* / *zmienka*.
 
@@ -66,9 +74,14 @@ Overené priamo v prehliadači (nie hádané):
 - Ten istý byt má **rovnaké ID** na oboch portáloch: 60 z 63 (2-izb.) a 58 z 58 (3-izb.) ponúk z reality.sk
   je aj na nehnutelnosti.sk. Nehnutelnosti.sk má navyše ~20 ponúk, ktoré reality.sk nemá.
 
-**Neoverené - zistí sa až prvým behom na GitHub Actions:**
-- Či portály nedajú GitHub runnerom (datacentrová IP) 403/captchu. Testy z prehliadača na domácej IP o tom nič
-  nehovoria. Scraper to nezahmlí: zlyhanie sa zapíše do logu aj do DB a HTML ukáže červený pruh.
+Zistené prvým behom na GitHub Actions (25.9.2026): **nehnutelnosti.sk funguje**, **reality.sk dáva z runnera
+`ConnectTimeout`** (sieťová úroveň, nie parser). Preto je reality.sk **nepovinný zdroj** (`REQUIRED = False`):
+jeho zlyhanie neoznačí workflow červeno, v HTML je len šedá poznámka a údaje o stave bytu prináša detail
+z nehnutelnosti.sk. Ak by si reality.sk chcel, spúšťaj scraper lokálne (domáca IP).
+
+**Neoverené:**
+- Formát meta popisu detailu je overený na ~6 inzerátoch; inzerát s nezvyčajnou štruktúrou môže dať "neznámy
+  štítok" (zaloguje sa, nie je to chyba).
 - Ako dlho vydržia podpísané URL fotiek (`?st=...`); pri chybe sa zobrazí "Bez fotky" a URL sa obnoví
   pri ďalšom behu.
 
@@ -92,6 +105,8 @@ musí zodpovedať deklarovanému počtu z portálu). Pri chybe sa nič neoznač�
 - Filtrujeme na inzerovanú cenu; "850 € vrátane energií" sa vyradí, hoci je reálne lacnejšie než "800 € + 80 €".
   Dá sa doladiť (napr. filtrovať na `price + energy_extra`).
 - Údaje v inzerátoch si niekedy odporujú (reálne: v texte 48 m², v poli 58 m²). Zobrazuje sa údaj z poľa portálu.
-- Duplicity sa zlučujú len pri zhodnom ID (rovnaký prevádzkovateľ portálov); rovnaký byt inzerovaný
-  agentom pod dvoma rôznymi ID sa nezlúči.
+- Duplicity sa zlučujú pri zhodnom ID (obe portály) a **prísne** aj pri rôznych ID, ak sedí počet izieb,
+  plocha, cena a titulok (odznak "možný duplikát", odkazy "(#2)"). Rovnaký byt s mierne inak napísaným
+  titulkom sa nezlúči - radšej duplicita než zlúčenie dvoch rôznych bytov.
+- Odznak NOVÉ sa v prvý (seed) deň nezobrazuje - vtedy je "nové" všetko.
 - Testovacie fixtures sú skrátené karty z reálnych výpisov, nie celé stránky.

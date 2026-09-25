@@ -32,6 +32,9 @@ from http_util import SourceError, diagnose_empty, fetch
 
 SOURCE_NAME = "reality_sk"
 LABEL = "reality.sk"
+# Nepovinný zdroj: z GitHub runnerov dáva reality.sk ConnectTimeout (overené 1. behom, 25.9.2026).
+# Jeho zlyhanie neoznačí workflow červeno a v HTML sa zobrazí len nenápadná poznámka.
+REQUIRED = False
 
 
 def _amenities(entity: dict) -> dict[str, str]:
@@ -138,7 +141,7 @@ def fetch_all(rooms_list: list[int]) -> list[dict]:
         declared_total = None
         for page_no in range(1, config.MAX_PAGES_PER_QUERY + 1):
             url = base if page_no == 1 else f"{base}?page={page_no}"
-            page = fetch(url, prefix)
+            page = fetch(url, prefix, attempts=1)
             candidates, declared = parse_page(page.text)
             if page_no == 1:
                 declared_total = declared

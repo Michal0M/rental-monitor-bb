@@ -27,6 +27,11 @@ from http_util import SourceError, diagnose_empty, fetch
 
 SOURCE_NAME = "nehnutelnosti_sk"
 LABEL = "nehnutelnosti.sk"
+REQUIRED = True   # zlyhanie tohto zdroja = chyba celého behu (workflow sa označí červeno)
+
+# Štítky stavu, ktoré poznáme (bez diakritiky). Iný štítok sa nezahodí - ide do textovej detekcie
+# a zaloguje sa ako "neznámy štítok stavu", aby sa dal doplniť do textutils._STRUCTURED_CONDITION.
+KNOWN_CONDITION_LABELS = {"novostavba", "kompletna rekonstrukcia", "ciastocna rekonstrukcia", "povodny stav"}
 _ID_RE = re.compile(r"/detail/([^/]+)/")
 
 
@@ -111,6 +116,43 @@ def parse_page(html: str) -> tuple[list[dict], int | None]:
             "main_photo_url": img["src"] if img else None,
         })
     return candidates, declared
+
+
+def parse_detail(html: str) -> dict:
+    """
+    Údaje z DETAILU inzerátu (overené 25.9.2026 na 5 inzerátoch, zhodné s reality.sk):
+      - `<meta name="description" content="2 izbový byt, Prenájom, Banská Bystrica, Novostavba, 58 m², 800 €/mes., ...">`
+        -> stav bytu je časť medzi mestom a plochou (chýba, ak ho inzerent nevyplnil);
+      - hlavný cenový riadok `<p data-test-id="text">720 €/mes. s energiami</p>` -> "s energiami" = energie v cene.
+    Vracia {"condition_label": str|None, "condition_candidates": [str], "energy_included": True|None}.
+    energy_included je True alebo None (absencia "s energiami" ešte nedokazuje, že energie NIE sú v cene).
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    meta = soup.find("meta", attrs={"name": "description"})
+    content = (meta.get("content") or "") if meta else ""
+    parts = [p.strip() for p in content.split(",")]
+
+    candidates: list[str] = []
+    for part in parts[3:8]:                       # 0: typ, 1: Prenájom, 2: mesto, potom stav / ulica, potom plocha
+        if re.search(r"\d\s*m\s*[²2]", part):
+            break
+        if part:
+            candidates.append(part)
+    label = next((c for c in candidates if textutils.fold(c) in KNOWN_CONDITION_LABELS), None)
+
+    energy = None
+    for p in soup.find_all("p", attrs={"data-test-id": "text"}):
+        text = p.get_text(" ", strip=True)
+        if re.match(r"^\d[\d\s.,]*\s*€\s*/\s*mes", text):
+            energy = True if "s energiami" in textutils.fold(text) else None
+            break
+    return {"condition_label": label, "condition_candidates": candidates, "energy_included": energy}
+
+
+def fetch_detail(url: str) -> dict:
+    """Stiahne a spracuje detail jedného inzerátu (throttled). Vyhodí SourceError pri chybe/blokovaní."""
+    page = fetch(url, f"[{SOURCE_NAME}] detail")
+    return parse_detail(page.text)
 
 
 def fetch_all(rooms_list: list[int]) -> list[dict]:

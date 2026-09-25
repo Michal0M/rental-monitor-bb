@@ -14,6 +14,10 @@ ROOMS = [2, 3]  # neskôr: [1, 2, 3]
 PRICE_MIN = 400
 PRICE_MAX = 800
 
+# Minimálna plocha (m²) podľa počtu izieb - odfiltruje veci ako "1,5i byt 32 m²" alebo
+# "2-izbový" s 25 m². Zámerne voľné hranice; inzerát bez uvedenej plochy sa neodmieta.
+MIN_AREA_M2 = {1: 0, 2: 35, 3: 50}
+
 # Stav bytu: chceme novostavbu alebo rekonštrukciu, nie "pôvodný stav".
 # MÄKKÝ filter (rovnaký princíp ako farby/rok pri arteon-monitor): nič sa nemaže,
 # len sa inzerát zobrazí pod inou záložkou:
@@ -44,7 +48,14 @@ MAX_PAGES_PER_QUERY = 6          # strop stránok na jeden dopyt (nehnutelnosti:
 # kvôli tomu neoznačia ako stiahnuté.
 COMPLETENESS_RATIO = 0.9
 
+# Detail inzerátu (nehnutelnosti.sk) obsahuje štruktúrovaný stav bytu ("Novostavba", "Kompletná
+# rekonštrukcia"...) a "s energiami", ktoré vo výpise nie sú. Detail sa sťahuje len pre NOVÉ
+# inzeráty a potom raz za DETAIL_REFRESH_DAYS dní (údaje sa ukladajú do DB).
+DETAIL_REFRESH_DAYS = 14
+DETAIL_MAX_PER_RUN = 120         # strop detailov na jeden beh (zvyšok sa dotiahne nasledujúci deň)
+
 NEW_BADGE_DAYS = 3               # "NOVÉ" badge pre inzeráty videné prvýkrát pred <= N dňami
+                                 # (pri úplne prvom behu sa "NOVÉ" nezobrazuje - to je len počiatočný stav)
 
 DB_PATH = "data/listings.db"
 OUTPUT_HTML_PATH = "docs/index.html"

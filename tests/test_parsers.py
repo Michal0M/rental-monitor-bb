@@ -121,6 +121,40 @@ class Pipeline(unittest.TestCase):
         c = scraper.enrich(self.r["JuDEMAND01"])
         self.assertIn("dopyt", scraper.rejection_reason(c))
 
+class NehnutelnostiDetail(unittest.TestCase):
+    """Reálne meta description a cenové riadky z detailov (overené 25.9.2026 v prehliadači, zhodné s reality.sk)."""
+
+    @staticmethod
+    def page(meta, price_line):
+        return (f'<html><head><meta name="description" content="{meta}"/></head>'
+                f'<body><p data-test-id="text">{price_line}</p></body></html>')
+
+    def test_conditions(self):
+        cases = [
+            ("2 izbový byt, Prenájom, Banská Bystrica, Novostavba, 58 m², 800 €/mes., Ponúkame", "Novostavba"),
+            ("2 izbový byt, Prenájom, Banská Bystrica, Pôvodný stav, 89 m², 600 €/mes., Reality", "Pôvodný stav"),
+            ("3 izbový byt, Prenájom, Banská Bystrica, Kompletná rekonštrukcia, 70 m², 750 €/mes., x", "Kompletná rekonštrukcia"),
+            ("2 izbový byt, Prenájom, Banská Bystrica, Čiastočná rekonštrukcia, 87 m², 720 €/mes., x", "Čiastočná rekonštrukcia"),
+            ("2 izbový byt, Prenájom, Banská Bystrica, 55 m², 600 €/mes., x", None),
+        ]
+        for meta, expected in cases:
+            self.assertEqual(nehn.parse_detail(self.page(meta, "600 €/mes."))["condition_label"], expected, meta)
+
+    def test_unknown_label_is_reported_not_dropped(self):
+        d = nehn.parse_detail(self.page("2 izbový byt, Prenájom, Banská Bystrica, Developerský projekt, 58 m², 800 €/mes., x", "800 €/mes."))
+        self.assertIsNone(d["condition_label"])
+        self.assertEqual(d["condition_candidates"], ["Developerský projekt"])
+
+    def test_energy_included_line(self):
+        meta = "2 izbový byt, Prenájom, Banská Bystrica, Novostavba, 58 m², 720 €/mes., x"
+        self.assertTrue(nehn.parse_detail(self.page(meta, "720 €/mes.<!-- --> <!-- -->s energiami"))["energy_included"])
+        self.assertIsNone(nehn.parse_detail(self.page(meta, "720 €/mes."))["energy_included"])
+
+    def test_empty_page_does_not_crash(self):
+        d = nehn.parse_detail("<html></html>")
+        self.assertEqual((d["condition_label"], d["energy_included"]), (None, None))
+
+
 
 if __name__ == "__main__":
     unittest.main()

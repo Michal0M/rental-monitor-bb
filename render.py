@@ -11,6 +11,10 @@ from datetime import datetime, timezone
 
 import config
 import db
+import textutils
+
+# Zdroje, ktorých zlyhanie nie je poplach (viď REQUIRED v scraperoch) - v HTML len nenápadná poznámka.
+OPTIONAL_SOURCES = {"reality_sk"}
 
 CONDITION_LABELS = {
     "new": "Novostavba",
@@ -60,6 +64,38 @@ def merge_listings(listings: list[dict]) -> list[dict]:
     return merged
 
 
+def dedupe_similar(cards: list[dict]) -> list[dict]:
+    """
+    Zlúči karty, ktoré majú RÔZNE ID, ale zjavne ide o ten istý byt (agent dal inzerát dvakrát):
+    rovnaký počet izieb, plocha, cena a titulok (bez diakritiky/veľkosti písmen). Prísny kľúč zámerne -
+    radšej zostane duplicita než zlúčenie dvoch rôznych bytov. Druhý odkaz sa označí "(#2)".
+    """
+    groups: dict[tuple, list[dict]] = {}
+    for c in cards:
+        if c["area_m2"] and c["price"] and c["rooms"]:
+            key = (c["rooms"], round(c["area_m2"], 1), c["price"], textutils.fold(c["title"]))
+        else:
+            key = ("unique", c["portal_id"])
+        groups.setdefault(key, []).append(c)
+
+    result = []
+    for items in groups.values():
+        items = sorted(items, key=lambda c: (c["status"] == "active", c["first_seen_at"]), reverse=True)
+        main = dict(items[0])
+        main["dup_count"] = len(items)
+        if len(items) > 1:
+            extra_sources = []
+            for n, other in enumerate(items[1:], start=2):
+                for src in other["sources"]:
+                    extra_sources.append({**src, "label": f'{src["label"]} (#{n})'})
+            main["sources"] = main["sources"] + extra_sources
+            if any(i["status"] == "active" for i in items):
+                main["status"] = "active"
+            main["first_seen_at"] = min(i["first_seen_at"] for i in items)
+        result.append(main)
+    return result
+
+
 def category(card: dict) -> str:
     """Záložka: removed / good / unsure / old."""
     if card["status"] != "active":
@@ -97,7 +133,7 @@ def price_trend_html(history: list[dict]) -> str:
     return f'<div class="price-history {css}">{arrow} história: {chain} €</div>'
 
 
-def card_html(card: dict, history: list[dict]) -> str:
+def card_html(card: dict, history: list[dict], seed_day: str | None = None) -> str:
     cat = category(card)
     total = total_cost(card)
     per_m2 = (card["price"] / card["area_m2"]) if card["price"] and card["area_m2"] else None
@@ -107,8 +143,13 @@ def card_html(card: dict, history: list[dict]) -> str:
     badges = []
     if card["status"] != "active":
         badges.append('<span class="badge badge-sold">Stiahnuté z ponuky</span>')
-    elif age_days <= config.NEW_BADGE_DAYS:
+    elif age_days <= config.NEW_BADGE_DAYS and card["first_seen_at"][:10] != seed_day:
         badges.append('<span class="badge badge-fresh">NOVÉ</span>')
+    if card.get("availability") == "reserved" and card["status"] == "active":
+        badges.append('<span class="badge badge-warn" title="V titulku inzerátu je REZERVOVANÉ">Rezervované</span>')
+    if card.get("dup_count", 1) > 1:
+        badges.append('<span class="badge badge-info" title="Rovnaký byt (izby, plocha, cena, titulok) inzerovaný '
+                      'pod viacerými ID - zlúčené">možný duplikát</span>')
     hint = "z popisu inzerátu" if card["condition_source"] == "text" else (
         "štruktúrované pole portálu" if card["condition_source"] == "structured" else "inzerát stav nespomína")
     badges.append(f'<span class="badge cond-{esc(card["condition"])}" title="{esc(hint)}">'
@@ -176,6 +217,9 @@ def run_status_html(runs: dict[str, dict]) -> str:
             continue
         if run["status"] == "ok":
             parts.append(f'{label}: OK ({run["found"]} inzerátov, {run["run_at"][:16].replace("T", " ")} UTC)')
+        elif source in OPTIONAL_SOURCES:
+            parts.append(f'{label}: nedostupný ({esc(run["status"])}, {run["run_at"][:16].replace("T", " ")} UTC) '
+                         f'- nepovinný zdroj, dáta z nehnutelnosti.sk sú úplné')
         else:
             problem = True
             parts.append(f'<b>{label}: ZLYHALO ({esc(run["status"])})</b> - {esc((run["message"] or "")[:200])}'
@@ -319,7 +363,9 @@ def render(db_path: str | None = None, output_path: str | None = None) -> str:
     db_path = db_path or config.DB_PATH
     output_path = output_path or config.OUTPUT_HTML_PATH
     with db.connect(db_path) as conn:
-        cards = merge_listings(db.get_all_listings(conn))
+        all_rows = db.get_all_listings(conn)
+        seed_day = min((r["first_seen_at"][:10] for r in all_rows), default=None)
+        cards = dedupe_similar(merge_listings(all_rows))
         histories = {c["histories_from"][0]: db.get_price_history(conn, c["histories_from"][0]) for c in cards}
         runs = db.last_source_runs(conn)
 
@@ -336,7 +382,7 @@ def render(db_path: str | None = None, output_path: str | None = None) -> str:
             .replace("%%N_GOOD%%", str(counts["good"])).replace("%%N_UNSURE%%", str(counts["unsure"]))
             .replace("%%N_OLD%%", str(counts["old"])).replace("%%N_REMOVED%%", str(counts["removed"]))
             .replace("%%N_ALL%%", str(len(cards)))
-            .replace("%%CARDS%%", "\n".join(card_html(c, histories[c["histories_from"][0]]) for c in cards)))
+            .replace("%%CARDS%%", "\n".join(card_html(c, histories[c["histories_from"][0]], seed_day) for c in cards)))
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(page)

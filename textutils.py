@@ -183,6 +183,21 @@ def detect_parking(text: str | None, structured: str | None = None) -> str | Non
 
 # ------------------------------------------------------------------ ostatné
 
+def is_rented(title: str | None) -> bool:
+    """'PRENAJATÉ - ...' v titulku = byt je už prenajatý. ('Prenajmeme...' je bežný inzerát - "prenajat" tam nie je.)"""
+    return bool(re.search(r"\bprenajat", fold(title)))
+
+
+def is_reserved(title: str | None) -> bool:
+    """'REZERVOVANÉ' / 'Rezervované!!!' v titulku."""
+    return bool(re.search(r"\brezervovan", fold(title)))
+
+
+def is_half_room(title: str | None) -> bool:
+    """'1,5i byt', '1,5-izbový', '1.5 izb.' - poloviční izba, nepatrí medzi 2-izbové."""
+    return bool(re.search(r"\b1[.,]5\s*[- ]?\s*i(?:zb|\b)", fold(title)))
+
+
 def detect_furnished(text: str | None) -> bool | None:
     t = fold(text)
     if re.search(r"nezariaden|bez\s+zariaden|bez\s+nabytku|prazdny", t):
