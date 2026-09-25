@@ -1,0 +1,97 @@
+# Monitor prenájmov BB
+
+Denne prechádza **nehnutelnosti.sk** a **reality.sk**, hľadá 2- a 3-izbové byty na prenájom
+v Banskej Bystrici podľa `config.py`, zapisuje ich do SQLite databázy s históriou cien a generuje
+statickú HTML stránku (`docs/index.html`) publikovanú cez GitHub Pages. Rovnaká architektúra ako
+`arteon-monitor`.
+
+## Ako to funguje
+
+1. **`scraper.py`** - pre každý zdroj stiahne výpis (1/2/3-izbové × všetky stránky), vyfiltruje podľa
+   `config.py`, doplní odvodené polia (stav bytu, energie, parkovanie) a zapíše do `data/listings.db`.
+2. **`render.py`** - z databázy vygeneruje `docs/index.html`. Ten istý byt na oboch portáloch je
+   **jedna karta** s odkazmi na oba (zlúčenie podľa spoločného ID inzerátu).
+3. **GitHub Actions** (`.github/workflows/daily-scrape.yml`) - raz denne (5:30 UTC) spustí testy, scraper
+   a render a výsledok commitne späť do repozitára.
+
+Súbory: `config.py` (kritériá) · `nehnutelnosti_scraper.py`, `reality_scraper.py` (parsery) ·
+`textutils.py` (extrakcia z textu) · `http_util.py` (sťahovanie, detekcia blokovania) · `db.py` · `render.py` ·
+`tests/` (39 testov na reálnych kartách uložených ako fixtures).
+
+## Prvotné nastavenie
+
+1. Vytvor nový **prázdny** repozitár `rental-monitor-bb` na GitHube (bez README).
+2. Nahraj kód:
+   ```bash
+   cd rental-monitor-bb
+   git init && git add . && git commit -m "Prvotný commit: monitor prenájmov BB"
+   git branch -M main
+   git remote add origin https://github.com/<username>/rental-monitor-bb.git
+   git push -u origin main
+   ```
+3. Settings → Pages: Source **Deploy from a branch**, branch **main**, priečinok **/docs**.
+4. Settings → Actions → General → Workflow permissions: **Read and write permissions**.
+5. Actions → *Denný scrape prenájmov BB* → **Run workflow** (prvý beh ručne, potom sleduj log).
+
+**Prvý beh je test, či portály pustia GitHub runnery** (viď nižšie). Pozri v logu riadky
+`GET ... -> 200` a `deklarovaných N inzerátov, na 1. strane M kariet`.
+
+## Kritériá (`config.py`)
+
+| Nastavenie | Predvolené | Poznámka |
+|---|---|---|
+| `ROOMS` | `[2, 3]` | 1-izbové pridáš zmenou na `[1, 2, 3]` (URL pre 1-izbové sú overené na oboch portáloch) |
+| `PRICE_MIN` / `PRICE_MAX` | 400 / 800 € | tvrdý filter na **inzerovanú** cenu, nie na cenu s energiami |
+| Stav bytu | mäkký filter | záložky, nič sa nemaže |
+
+**Stav bytu** (novostavba/rekonštrukcia, nie "pôvodný"): reality.sk má štruktúrované pole
+*Stav nehnuteľnosti* (Novostavba / Kompletná rekonštrukcia / Čiastočná rekonštrukcia / Pôvodný stav).
+Nehnutelnosti.sk ho vo výpise nemá, tam sa stav hádže z textu (`novostavb`, `rekonštruk`, `pôvodný stav`...).
+Ak sa byt nájde na oboch, vyhráva štruktúrované pole. Záložky: *Novostavba / rekonštrukcia*,
+*Neistý stav* (čiastočná rekonštrukcia alebo inzerát stav nespomína), *Pôvodný stav*.
+
+**Energie:** inzeráty typu "750 € + 80 € energie" prejdú filtrom (filtruje sa na 750). Ak sa suma energií
+dá vyčítať z textu, karta ukáže `celkom ≈ 830 €` a dá sa podľa nej radiť. Reálny príklad z 25.9.2026:
+"800 € nájom a 180 € energie" = 980 €.
+
+**Parkovanie** nie je kritérium, len badge: *v cene* / *za príplatok* / *zmienka*.
+
+## Čo je overené a čo nie (25.9.2026)
+
+Overené priamo v prehliadači (nie hádané):
+- robots.txt oboch portálov povoľuje naše URL (`?page=N`). Bazoš je vynechaný, lebo jeho robots.txt
+  zakazuje filtrovanie podľa lokality (`hlokalita=`, `humkreis`).
+- Oba portály vracajú inzeráty v surovom HTML (bez JavaScriptu).
+- Stránkovanie je úplné: nehnutelnosti.sk 71/71 (2-izb.) a 67/67 (3-izb.), reality.sk 63/63 a 58/58.
+- Ten istý byt má **rovnaké ID** na oboch portáloch: 60 z 63 (2-izb.) a 58 z 58 (3-izb.) ponúk z reality.sk
+  je aj na nehnutelnosti.sk. Nehnutelnosti.sk má navyše ~20 ponúk, ktoré reality.sk nemá.
+
+**Neoverené - zistí sa až prvým behom na GitHub Actions:**
+- Či portály nedajú GitHub runnerom (datacentrová IP) 403/captchu. Testy z prehliadača na domácej IP o tom nič
+  nehovoria. Scraper to nezahmlí: zlyhanie sa zapíše do logu aj do DB a HTML ukáže červený pruh.
+- Ako dlho vydržia podpísané URL fotiek (`?st=...`); pri chybe sa zobrazí "Bez fotky" a URL sa obnoví
+  pri ďalšom behu.
+
+## Čo robiť, ak to prestane fungovať
+
+- **Workflow červený, log ukazuje `ZLYHALO (blocked)`** - portál blokuje runner. Skús neskôr ručne;
+  ak je to trvalé, spúšťaj scraper lokálne cez plánovač úloh na PC (domáca IP). User-Agent v `config.py` je
+  zámerne poctivý (identifikuje nástroj); nemeň ho na predstieranie prehliadača bez toho, aby si zvážil dôsledky.
+- **`ZLYHALO (structure)` alebo 0 kariet** - zmenila sa štruktúra stránky. Over ju znova v prehliadači a uprav
+  parser (`parse_page` v príslušnom `*_scraper.py`). Na nehnutelnosti.sk sa nespoliehame na hashované CSS
+  triedy (`mui-...`), len na odkazy `/detail/<id>/`, `<h2>` a `<p data-test-id="text">`.
+- **Zlé stavy/energie/parkovanie** - texty inzerátov sú voľné; doplň vzor do `textutils.py` a test do
+  `tests/test_textutils.py`.
+
+Poistky: inzeráty sa označia ako *stiahnuté* **len po úplnom úspešnom behu zdroja** (počet nájdených
+musí zodpovedať deklarovanému počtu z portálu). Pri chybe sa nič neoznačí.
+
+## Známe obmedzenia
+
+- Pokrýva len mesto Banská Bystrica (výpisy portálov "Banská Bystrica"), nie okolité obce.
+- Filtrujeme na inzerovanú cenu; "850 € vrátane energií" sa vyradí, hoci je reálne lacnejšie než "800 € + 80 €".
+  Dá sa doladiť (napr. filtrovať na `price + energy_extra`).
+- Údaje v inzerátoch si niekedy odporujú (reálne: v texte 48 m², v poli 58 m²). Zobrazuje sa údaj z poľa portálu.
+- Duplicity sa zlučujú len pri zhodnom ID (rovnaký prevádzkovateľ portálov); rovnaký byt inzerovaný
+  agentom pod dvoma rôznymi ID sa nezlúči.
+- Testovacie fixtures sú skrátené karty z reálnych výpisov, nie celé stránky.
