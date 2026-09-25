@@ -150,6 +150,13 @@ class NehnutelnostiDetail(unittest.TestCase):
         self.assertTrue(nehn.parse_detail(self.page(meta, "720 €/mes.<!-- --> <!-- -->s energiami"))["energy_included"])
         self.assertIsNone(nehn.parse_detail(self.page(meta, "720 €/mes."))["energy_included"])
 
+    def test_full_description_from_detail(self):
+        html = ('<html><head><meta name="description" content="2 izbový byt, Prenájom, Banská Bystrica, Novostavba, 60 m², 750 €/mes., x"/></head>'
+                '<body><p id="detail-description" data-test-id="text">Byt 750€\nEnergie a správa 100€\nGarážové miesto 50 €</p></body></html>')
+        d = nehn.parse_detail(html)
+        self.assertIn("Energie a správa 100€", d["description"])
+        self.assertIn("\n", d["description"])
+
     def test_empty_page_does_not_crash(self):
         d = nehn.parse_detail("<html></html>")
         self.assertEqual((d["condition_label"], d["energy_included"]), (None, None))

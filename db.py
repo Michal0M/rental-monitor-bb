@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS listings (
     structured_condition TEXT,               -- surový štítok stavu z portálu (z detailu / JSON-LD), pre cache
     structured_energy INTEGER,               -- 1 = portál uvádza "s energiami", NULL = neznáme
     detail_checked_at TEXT,                  -- kedy sa naposledy stiahol detail inzerátu (nehnutelnosti.sk)
+    detail_version    INTEGER,               -- verzia parsera detailu, ktorou sa stiahol (config.DETAIL_VERSION)
+    parking_extra     REAL,                  -- mesačná cena parkovania navyše, ak ju inzerát uvádza
     status            TEXT DEFAULT 'active', -- active / removed
     first_seen_at     TEXT NOT NULL,
     last_seen_at      TEXT NOT NULL,
@@ -72,7 +74,7 @@ CREATE INDEX IF NOT EXISTS idx_listings_portal ON listings(portal_id);
 _COLUMNS = ["source", "portal_id", "url", "title", "description_raw", "rooms", "area_m2", "price",
             "energy_included", "energy_extra", "street", "location", "condition", "condition_source",
             "parking", "furnished", "is_panel", "floor", "main_photo_url", "availability",
-            "structured_condition", "structured_energy", "detail_checked_at"]
+            "structured_condition", "structured_energy", "detail_checked_at", "detail_version", "parking_extra"]
 
 # Stĺpce pridané po prvom nasadení - ALTER TABLE pre už existujúce DB súbory (CREATE TABLE IF NOT EXISTS
 # na existujúcu tabuľku nové stĺpce nedopíše). Bezpečné spúšťať opakovane.
@@ -81,6 +83,8 @@ _MIGRATIONS = [
     ("structured_condition", "TEXT"),
     ("structured_energy", "INTEGER"),
     ("detail_checked_at", "TEXT"),
+    ("detail_version", "INTEGER"),
+    ("parking_extra", "REAL"),
 ]
 
 
@@ -155,9 +159,11 @@ def upsert_listing(conn, listing: dict) -> str:
     return "reappeared" if was_removed else "unchanged"
 
 
-def detail_is_stale(existing: dict | None, max_age_days: int) -> bool:
-    """True, ak sa detail inzerátu ešte nikdy nesťahoval alebo je starší než max_age_days."""
+def detail_is_stale(existing: dict | None, max_age_days: int, version: int | None = None) -> bool:
+    """True, ak sa detail ešte nesťahoval, je starší než max_age_days alebo bol stiahnutý staršou verziou parsera."""
     if existing is None or not existing.get("detail_checked_at"):
+        return True
+    if version is not None and existing.get("detail_version") != version:
         return True
     checked = datetime.fromisoformat(existing["detail_checked_at"])
     return (datetime.now(timezone.utc) - checked).days >= max_age_days

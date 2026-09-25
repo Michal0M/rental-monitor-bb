@@ -26,7 +26,7 @@ CONDITION_LABELS = {
 SOURCE_LABELS = {"nehnutelnosti_sk": "nehnutelnosti.sk", "reality_sk": "reality.sk"}
 PARKING_LABELS = {"included": "Parkovanie v cene", "optional": "Parkovanie za príplatok", "mentioned": "Parkovanie (zmienka)"}
 FILL_FIELDS = ["area_m2", "street", "floor", "main_photo_url", "energy_included", "energy_extra",
-               "parking", "furnished", "rooms"]
+               "parking", "parking_extra", "furnished", "rooms"]
 
 
 def esc(value) -> str:
@@ -155,7 +155,10 @@ def card_html(card: dict, history: list[dict], seed_day: str | None = None) -> s
     badges.append(f'<span class="badge cond-{esc(card["condition"])}" title="{esc(hint)}">'
                   f'{CONDITION_LABELS.get(card["condition"], "?")}</span>')
     if card["parking"]:
-        badges.append(f'<span class="badge badge-parking">{PARKING_LABELS[card["parking"]]}</span>')
+        label = PARKING_LABELS[card["parking"]]
+        if card.get("parking_extra"):
+            label = f'Parkovanie +{fmt_eur(card["parking_extra"])}/mes.'
+        badges.append(f'<span class="badge badge-parking">{label}</span>')
     if card["furnished"] == 1:
         badges.append('<span class="badge badge-info">Zariadený</span>')
     elif card["furnished"] == 0:
@@ -189,7 +192,7 @@ def card_html(card: dict, history: list[dict], seed_day: str | None = None) -> s
         meta_parts.append(f'{esc(card["floor"])}. poschodie')
 
     return f"""
-    <div class="card" data-cat="{cat}" data-total="{total or 0:.0f}" data-ppm2="{per_m2 or 0:.2f}"
+    <div class="card" data-cat="{cat}" data-rooms="{card['rooms'] or 0}" data-total="{total or 0:.0f}" data-ppm2="{per_m2 or 0:.2f}"
          data-area="{card['area_m2'] or 0}" data-first="{int(first.timestamp())}">
       <a href="{esc(primary_url)}" target="_blank" rel="noopener" class="card-photo-link">{photo_html}</a>
       <div class="card-body">
@@ -248,6 +251,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
   .controls button { background:var(--card-bg); border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; }
   .controls button.active, .controls button.sort-btn-active { background:var(--accent); border-color:var(--accent); color:#fff; }
   .sort-label { color:var(--text-dim); font-size:13px; }
+  .controls button.room-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
   .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:14px; }
   .card { background:var(--card-bg); border:1px solid var(--border); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
   .card[data-cat="removed"] { opacity:.5; }
@@ -280,15 +284,19 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 </style>
 </head>
 <body>
-  <h1>🏠 Prenájmy 2- a 3-izbových bytov · Banská Bystrica</h1>
+  <h1>🏠 Prenájmy bytov · Banská Bystrica</h1>
   <div class="subtitle">Aktualizované: %%UPDATED%% · rozsah %%PRICE_MIN%%–%%PRICE_MAX%% € · %%ROOMS%%-izbové</div>
   %%RUN_STATUS%%
   <div class="controls">
-    <button class="filter-btn active" data-filter="good">Novostavba / rekonštrukcia (%%N_GOOD%%)</button>
-    <button class="filter-btn" data-filter="unsure">Neistý stav (%%N_UNSURE%%)</button>
-    <button class="filter-btn" data-filter="old">Pôvodný stav (%%N_OLD%%)</button>
-    <button class="filter-btn" data-filter="removed">Stiahnuté (%%N_REMOVED%%)</button>
-    <button class="filter-btn" data-filter="all">Všetky (%%N_ALL%%)</button>
+    <button class="filter-btn active" data-filter="good" data-label="Novostavba / rekonštrukcia">Novostavba / rekonštrukcia (%%N_GOOD%%)</button>
+    <button class="filter-btn" data-filter="unsure" data-label="Neistý stav">Neistý stav (%%N_UNSURE%%)</button>
+    <button class="filter-btn" data-filter="old" data-label="Pôvodný stav">Pôvodný stav (%%N_OLD%%)</button>
+    <button class="filter-btn" data-filter="removed" data-label="Stiahnuté">Stiahnuté (%%N_REMOVED%%)</button>
+    <button class="filter-btn" data-filter="all" data-label="Všetky">Všetky (%%N_ALL%%)</button>
+  </div>
+  <div class="controls">
+    <span class="sort-label">Izby:</span>
+    %%ROOM_BUTTONS%%
   </div>
   <div class="controls">
     <span class="sort-label">Zoradiť:</span>
@@ -307,18 +315,35 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
   const empty = document.getElementById('empty');
   const cards = Array.from(grid.children);
   let currentFilter = 'good';
+  let currentRooms = 'all';
   // Predvolený smer: cena/€/m² vzostupne, plocha a "najnovšie" zostupne.
   const sortState = { field: 'total', asc: true };
   const DEFAULT_ASC = { total: true, ppm2: true, area: false, first: false };
 
+  const catOk = (c, f) => f === 'all' || c.dataset.cat === f;
+  const roomsOk = (c, r) => r === 'all' || c.dataset.rooms === r;
+
+  function updateCounts() {
+    // Počty v záložkách zohľadňujú zvolený počet izieb a počty pri izbách zvolenú záložku.
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      const n = cards.filter(c => catOk(c, btn.dataset.filter) && roomsOk(c, currentRooms)).length;
+      btn.textContent = btn.dataset.label + ' (' + n + ')';
+    });
+    document.querySelectorAll('.room-btn').forEach(btn => {
+      const n = cards.filter(c => catOk(c, currentFilter) && roomsOk(c, btn.dataset.rooms)).length;
+      btn.textContent = btn.dataset.label + ' (' + n + ')';
+    });
+  }
+
   function applyFilter() {
     let visible = 0;
     cards.forEach(c => {
-      const show = currentFilter === 'all' || c.dataset.cat === currentFilter;
+      const show = catOk(c, currentFilter) && roomsOk(c, currentRooms);
       c.style.display = show ? '' : 'none';
       if (show) visible++;
     });
     empty.style.display = visible === 0 ? 'block' : 'none';
+    updateCounts();
   }
 
   function applySort() {
@@ -346,6 +371,13 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
     applyFilter();
   }));
 
+  document.querySelectorAll('.room-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentRooms = btn.dataset.rooms;
+    applyFilter();
+  }));
+
   document.querySelectorAll('.sort-btn').forEach(btn => btn.addEventListener('click', () => {
     if (sortState.field === btn.dataset.field) sortState.asc = !sortState.asc;
     else { sortState.field = btn.dataset.field; sortState.asc = DEFAULT_ASC[btn.dataset.field]; }
@@ -357,6 +389,15 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 </body>
 </html>
 """
+
+
+def room_buttons_html(cards: list[dict]) -> str:
+    """Tlačidlá 'Všetky izby / 1-izbové / 2-izbové / 3-izbové'. Počty sa v prehliadači prepočítavajú (JS)."""
+    buttons = [f'<button class="room-btn active" data-rooms="all" data-label="Všetky izby">Všetky izby ({len(cards)})</button>']
+    for r in config.ROOMS:
+        n = sum(1 for c in cards if c["rooms"] == r)
+        buttons.append(f'<button class="room-btn" data-rooms="{r}" data-label="{r}-izbové">{r}-izbové ({n})</button>')
+    return "\n    ".join(buttons)
 
 
 def render(db_path: str | None = None, output_path: str | None = None) -> str:
@@ -379,6 +420,7 @@ def render(db_path: str | None = None, output_path: str | None = None) -> str:
             .replace("%%PRICE_MIN%%", str(config.PRICE_MIN)).replace("%%PRICE_MAX%%", str(config.PRICE_MAX))
             .replace("%%ROOMS%%", "/".join(str(r) for r in config.ROOMS))
             .replace("%%RUN_STATUS%%", run_status_html(runs))
+            .replace("%%ROOM_BUTTONS%%", room_buttons_html(cards))
             .replace("%%N_GOOD%%", str(counts["good"])).replace("%%N_UNSURE%%", str(counts["unsure"]))
             .replace("%%N_OLD%%", str(counts["old"])).replace("%%N_REMOVED%%", str(counts["removed"]))
             .replace("%%N_ALL%%", str(len(cards)))

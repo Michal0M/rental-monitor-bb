@@ -39,6 +39,7 @@ def enrich(c: dict) -> dict:
         "energy_included": None if included is None else int(included),
         "energy_extra": extra,
         "parking": textutils.detect_parking(text, c.get("structured_parking")),
+        "parking_extra": textutils.detect_parking_extra(text),
         "furnished": (lambda v: None if v is None else int(v))(textutils.detect_furnished(text)),
         "is_panel": int(textutils.detect_panel(text)),
     })
@@ -79,7 +80,11 @@ def apply_detail(conn, module, raw: dict, budget: dict) -> None:
         raw["structured_condition"] = raw.get("structured_condition") or existing.get("structured_condition")
         raw["structured_energy"] = existing.get("structured_energy")
         raw["detail_checked_at"] = existing.get("detail_checked_at")
-    if not db.detail_is_stale(existing, config.DETAIL_REFRESH_DAYS):
+        raw["detail_version"] = existing.get("detail_version")
+        # výpis dáva len skrátený popis - uložený celý popis z detailu nesmie byť prepísaný kratším
+        if len(existing.get("description_raw") or "") > len(raw.get("description_raw") or ""):
+            raw["description_raw"] = existing["description_raw"]
+    if not db.detail_is_stale(existing, config.DETAIL_REFRESH_DAYS, config.DETAIL_VERSION):
         return
     if budget["stopped"] or budget["used"] >= config.DETAIL_MAX_PER_RUN:
         budget["skipped"] += 1
@@ -102,7 +107,10 @@ def apply_detail(conn, module, raw: dict, budget: dict) -> None:
               f"({raw['portal_id']}) - doplň do KNOWN_CONDITION_LABELS / textutils._STRUCTURED_CONDITION")
     if detail.get("energy_included"):
         raw["structured_energy"] = 1
+    if len(detail.get("description") or "") > len(raw.get("description_raw") or ""):
+        raw["description_raw"] = detail["description"]
     raw["detail_checked_at"] = db.now_iso()
+    raw["detail_version"] = config.DETAIL_VERSION
 
 
 def process_source(module, conn) -> tuple[str, dict]:

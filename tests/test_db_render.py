@@ -120,6 +120,32 @@ class DetailAndFilterTests(unittest.TestCase):
             row = db.get_listing(conn, "nehnutelnosti_sk:JuA")
             self.assertEqual((row["condition"], row["condition_source"]), ("new", "structured"))   # cache prežila výpis
 
+    def test_full_description_used_and_survives_next_run(self):
+        full = "Byt 750€\nEnergie a správa 100€\nGarážové parkovacie miesto  50 €\n(v podzemnej garáži)"
+        detail = lambda url: {"condition_label": "Novostavba", "condition_candidates": ["Novostavba"],
+                              "energy_included": None, "description": full}
+        mod = self._module([sample(portal_id="JuA", description_raw="Skrátený popis...")], detail)
+        with db.connect(self.path) as conn:
+            scraper.process_source(mod, conn)
+            row = db.get_listing(conn, "nehnutelnosti_sk:JuA")
+            self.assertEqual((row["energy_included"], row["energy_extra"], row["parking"], row["parking_extra"]),
+                             (0, 100.0, "optional", 50.0))
+            scraper.process_source(mod, conn)     # druhý beh: výpis má znova len skrátený popis, detail sa nesťahuje
+            self.assertEqual(len(mod.calls), 1)
+            row = db.get_listing(conn, "nehnutelnosti_sk:JuA")
+            self.assertEqual((row["energy_extra"], row["parking_extra"]), (100.0, 50.0))
+
+    def test_old_detail_version_is_refetched_once(self):
+        detail = lambda url: {"condition_label": None, "condition_candidates": [], "energy_included": None, "description": ""}
+        mod = self._module([sample(portal_id="JuA")], detail)
+        with db.connect(self.path) as conn:
+            scraper.process_source(mod, conn)
+            conn.execute("UPDATE listings SET detail_version = 1")     # cache z predošlej verzie parsera
+            scraper.process_source(mod, conn)
+            self.assertEqual(len(mod.calls), 2)
+            scraper.process_source(mod, conn)
+            self.assertEqual(len(mod.calls), 2)
+
     def test_blocked_detail_stops_fetching_but_keeps_listings(self):
         def boom(url):
             raise SourceError("blocked", "HTTP 403")
@@ -189,6 +215,25 @@ class RenderTests(unittest.TestCase):
         self.assertIn("reality.sk", page)
         self.assertIn("980 €", page)             # 800 + 180 energie
         self.assertIn("+ 180 € energie", page)
+
+    def test_parking_price_badge(self):
+        with db.connect(self.path) as conn:
+            db.upsert_listing(conn, sample(parking="optional", parking_extra=50.0, energy_included=0, energy_extra=100.0))
+        page = render.render(self.path, self.out)
+        self.assertIn("Parkovanie +50 €/mes.", page)
+        self.assertIn("+ 100 € energie", page)
+        self.assertIn("celkom ≈ 800 €", page)
+
+    def test_room_filter_buttons_and_card_attribute(self):
+        with db.connect(self.path) as conn:
+            db.upsert_listing(conn, sample(portal_id="J1", rooms=1, title="A", area_m2=30.0))
+            db.upsert_listing(conn, sample(portal_id="J2", rooms=2, title="B"))
+            db.upsert_listing(conn, sample(portal_id="J3", rooms=3, title="C", area_m2=70.0))
+        page = render.render(self.path, self.out)
+        for r in (1, 2, 3):
+            self.assertIn(f'data-rooms="{r}" data-label="{r}-izbové">{r}-izbové (1)', page)
+            self.assertIn(f'class="card" data-cat="good" data-rooms="{r}"', page)
+        self.assertIn("Všetky izby (3)", page)
 
     def test_html_is_escaped(self):
         with db.connect(self.path) as conn:

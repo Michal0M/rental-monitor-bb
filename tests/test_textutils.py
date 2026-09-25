@@ -1,5 +1,7 @@
 import unittest
 
+import textutils
+
 import textutils as tu
 
 
@@ -109,6 +111,38 @@ class Misc(unittest.TestCase):
         self.assertIsNone(tu.detect_furnished("pekný byt"))
         self.assertTrue(tu.detect_panel("v panelovom dome"))
         self.assertFalse(tu.detect_panel("v tehlovom dome"))
+
+class RealDetailDescription(unittest.TestCase):
+    """Reálny popis z detailu inzerátu JuOsmCsCuql (25.9.2026): výpis ho skracuje, detail ho má celý."""
+    TEXT = ("Byt sa prenajíma minimálne na 1 rok.\nByt 750€\nEnergie a správa 100€\nV cene TV a internet (optika).\n"
+            "Garážové parkovacie miesto  50 €\n(v podzemnej garáži bytového domu)\nSPOLU 900€\n\nVratná kaucia 900 €")
+
+    def test_energy_with_management_fee(self):
+        self.assertEqual(textutils.detect_energy(self.TEXT), (False, 100.0))
+
+    def test_parking_with_price_is_optional(self):
+        self.assertEqual(textutils.detect_parking(self.TEXT), "optional")
+        self.assertEqual(textutils.detect_parking_extra(self.TEXT), 50.0)
+
+    def test_more_real_descriptions(self):
+        cases = [  # (text, energie, parkovanie, cena parkovania) - úryvky reálnych inzerátov z 25.9.2026
+            ("Parkovacie miesto na uzavretom parkovisku za mesačný poplatok 50 eur.", (None, None), "optional", 50.0),
+            ("Cena je KONEČNÁ – už zahŕňa zálohové platby za energie, ako aj internet a TV!", (True, None), None, None),
+            ("720 eur mesačne vrátane energií, internetu a parkovacieho miesta. Depozit vo výške 600 eur", (True, None), "included", None),
+            ("Cena na mesiac 380,- eur + 220,- eur energie .", (False, 220.0), None, None),
+            ("Byt 350 €\nEnergie 80 €", (False, 80.0), None, None),     # riadky sa nesmú zlepiť (350 nie sú energie)
+            ("verejné parkovanie pri dome\nCena: 600 € mesačne vrátane energií.", (True, None), "mentioned", None),
+        ]
+        for text, energy, parking, extra in cases:
+            self.assertEqual(textutils.detect_energy(text), energy, text)
+            self.assertEqual(textutils.detect_parking(text), parking, text)
+            self.assertEqual(textutils.detect_parking_extra(text), extra, text)
+
+    def test_parking_included_price_is_not_parking_price(self):
+        t = "Cena je vrátane parkovacieho miesta, nájom 750 €"
+        self.assertEqual(textutils.detect_parking(t), "included")
+        self.assertIsNone(textutils.detect_parking_extra(t))
+
 
 
 if __name__ == "__main__":

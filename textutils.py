@@ -25,6 +25,12 @@ def fold(text: str | None) -> str:
     return re.sub(r"\s+", " ", s)
 
 
+def fold_lines(text: str | None) -> str:
+    """Ako fold(), ale každý koniec riadku sa zmení na ". " - popisy z detailu majú položky po riadkoch
+    ("Byt 750€⏎Energie 100€") a bez oddelenia by sa čísla a slová z rôznych riadkov zlepili."""
+    return fold(re.sub(r"\s*[\r\n]+\s*", ". ", text or ""))
+
+
 # ------------------------------------------------------------------ čísla
 
 def parse_price(text: str | None) -> float | None:
@@ -105,16 +111,18 @@ def detect_condition(text: str | None, structured: str | None = None) -> tuple[s
 
 _ENERGY_EXTRA_PATTERNS = [
     # "180 € /mesiac energie", "80 eur energie", "80 € záloha na energie"
-    r"(\d{2,3})\s*eur\w*\s*/?\s*(?:mesiac|mesacne|mes)?\s*(?:za\s+|na\s+)?(?:zalohy?\s+(?:na\s+)?)?energi",
-    # "energie 80 €", "energie: cca 80 €", "energie vo výške 80 €"
-    r"energi\w*\s*(?:cca|asi|ca|priblizne|okolo|vo vyske|:|-)?\s*(?:cca\s*)?(\d{2,3})\s*eur",
+    r"(\d{2,3})(?:,-)?\s*eur\w*\s*/?\s*(?:mesiac|mesacne|mes)?\s*(?:za\s+|na\s+)?(?:zalohy?\s+(?:na\s+)?)?energi",
+    # "energie 80 €", "energie: cca 80 €", "energie vo výške 80 €",
+    # "Energie a správa 100€", "energie + poplatky 90 €", "energie, internet 120 €"
+    r"energi\w*(?:\s*(?:a|\+|,|/)\s*(?:sprav\w*|poplat\w*|internet\w*|odpad\w*))*"
+    r"\s*(?:cca|asi|ca|priblizne|okolo|vo vyske|:|-)?\s*(?:cca\s*)?(\d{2,3})(?:,-)?\s*eur",
     # "zálohy na energie 80"
     r"zalohy?\s+(?:na\s+)?energi\w*\s*(?:cca|vo vyske|:)?\s*(\d{2,3})\b",
 ]
 
 _ENERGY_INCLUDED = (
     r"(?:vratane|s|v cene)\s+(?:vsetk\w+\s+)?(?:energi|inkasa)|energi\w*\s+(?:su\s+|sú\s+)?(?:v\s+cene|zahrnut)"
-    r"|cena\s+(?:je\s+)?(?:kompletna|vratane)"
+    r"|cena\s+(?:je\s+)?(?:kompletna|vratane)|zahrna\w*\s+(?:zalohov\w+\s+platby\s+za\s+)?energi"
 )
 _ENERGY_EXCLUDED = r"bez\s+energi|energi\w*\s+(?:navyse|zvlast|hradi|sa\s+plat)"
 
@@ -125,7 +133,7 @@ def detect_energy(text: str | None, structured_included: bool | None = None) -> 
         energie_v_cene: True / False / None (neznáme)
         extra: mesačná suma energií navyše, ak sa dala vyčítať z textu (20-400 €), inak None.
     """
-    t = fold(text)
+    t = fold_lines(text)
     extra = None
     for pattern in _ENERGY_EXTRA_PATTERNS:
         m = re.search(pattern, t)
@@ -157,20 +165,21 @@ _PARK_INCLUDED = (r"k\s+bytu\s+(?:patri|prislucha|nalezi)|sucastou\s+(?:bytu|cen
                   r"|vlastn\w+|vyhraden\w+|garazove\s+statie|pridelen\w+")
 
 
-def detect_parking(text: str | None, structured: str | None = None) -> str | None:
-    """
-    'included' (patrí k bytu / vyhradené) | 'optional' (za príplatok / dá sa prikúpiť)
-    | 'mentioned' (spomenuté bez detailu) | None.
-    Parkovanie NIE je kritérium filtra, len informácia (badge) na karte.
-    """
+def _parking_scan(text: str | None, structured: str | None = None) -> tuple[str | None, float | None]:
+    """(druh, cena parkovania navyše za mesiac | None). Cena sa berie len z vety o parkovaní, ktorá NIE JE
+    "v cene/vrátane" (inak by to bola cena nájmu). Rozsah 10-300 €."""
     if structured and re.search(_PARK_WORD, fold(structured)):
-        return "included"
-    found = None
+        return "included", None
+    found, found_price = None, None
     rank = {"mentioned": 1, "optional": 2, "included": 3}
-    for sentence in re.split(r"[.!?;\n]", fold(text)):
+    for sentence in re.split(r"[.!?;]", fold_lines(text)):
         if not re.search(_PARK_WORD, sentence) or re.search(_PARK_NEG, sentence):
             continue
-        if re.search(_PARK_OPTIONAL, sentence):
+        price = None
+        m = re.search(r"(\d{2,3})(?:,-)?\s*eur", sentence)
+        if m and 10 <= float(m.group(1)) <= 300 and not re.search(r"v\s+cene|vratane|zahrnut", sentence):
+            price = float(m.group(1))
+        if re.search(_PARK_OPTIONAL, sentence) or price is not None:
             kind = "optional"
         elif re.search(_PARK_INCLUDED, sentence):
             kind = "included"
@@ -178,7 +187,23 @@ def detect_parking(text: str | None, structured: str | None = None) -> str | Non
             kind = "mentioned"
         if found is None or rank[kind] > rank[found]:
             found = kind
-    return found
+        if kind == "optional" and price is not None and found_price is None:
+            found_price = price
+    return found, found_price
+
+
+def detect_parking(text: str | None, structured: str | None = None) -> str | None:
+    """
+    'included' (patrí k bytu / vyhradené) | 'optional' (za príplatok / dá sa prikúpiť)
+    | 'mentioned' (spomenuté bez detailu) | None.
+    Parkovanie NIE je kritérium filtra, len informácia (badge) na karte.
+    """
+    return _parking_scan(text, structured)[0]
+
+
+def detect_parking_extra(text: str | None) -> float | None:
+    """Mesačná cena parkovania navyše ("Garážové parkovacie miesto 50 €"), inak None."""
+    return _parking_scan(text)[1]
 
 
 # ------------------------------------------------------------------ ostatné

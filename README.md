@@ -1,6 +1,6 @@
 # Monitor prenájmov BB
 
-Denne prechádza **nehnutelnosti.sk** a **reality.sk**, hľadá 2- a 3-izbové byty na prenájom
+Denne prechádza **nehnutelnosti.sk** a **reality.sk**, hľadá 1-, 2- a 3-izbové byty na prenájom
 v Banskej Bystrici podľa `config.py`, zapisuje ich do SQLite databázy s históriou cien a generuje
 statickú HTML stránku (`docs/index.html`) publikovanú cez GitHub Pages. Rovnaká architektúra ako
 `arteon-monitor`.
@@ -40,7 +40,7 @@ Súbory: `config.py` (kritériá) · `nehnutelnosti_scraper.py`, `reality_scrape
 
 | Nastavenie | Predvolené | Poznámka |
 |---|---|---|
-| `ROOMS` | `[2, 3]` | 1-izbové pridáš zmenou na `[1, 2, 3]` (URL pre 1-izbové sú overené na oboch portáloch) |
+| `ROOMS` | `[1, 2, 3]` | na stránke sa dá filtrovať podľa počtu izieb (tlačidlá *Izby*) v kombinácii so záložkou stavu a radením |
 | `PRICE_MIN` / `PRICE_MAX` | 400 / 800 € | tvrdý filter na **inzerovanú** cenu, nie na cenu s energiami |
 | Stav bytu | mäkký filter | záložky, nič sa nemaže |
 
@@ -58,6 +58,12 @@ Ak je byt aj na reality.sk, vyhráva štruktúrované pole. Záložky: *Novostav
 **Energie:** inzeráty typu "750 € + 80 € energie" prejdú filtrom (filtruje sa na 750). Ak sa suma energií
 dá vyčítať z textu, karta ukáže `celkom ≈ 830 €` a dá sa podľa nej radiť. Reálny príklad z 25.9.2026:
 "800 € nájom a 180 € energie" = 980 €.
+
+**Celý popis z detailu:** výpis skracuje popis, preto sa energie a parkovanie často nedali vyčítať. Detail má
+celý popis v `<p id="detail-description">`; ukladá sa do DB (`description_raw`) a texty ako "Energie a správa 100€"
+alebo "Garážové parkovacie miesto 50 €" sa vyhodnocujú z neho. Karta ukáže `+ 100 € energie`, `celkom ≈ 850 €`
+a odznak `Parkovanie +50 €/mes.` (cena parkovania sa do "celkom" nepočíta). Zmena parsera detailu = zvýš
+`DETAIL_VERSION` v `config.py`, všetky detaily sa jednorazovo stiahnu znova.
 
 **Ďalšie filtre:** `PRENAJATÉ` v titulku = vyradené; `REZERVOVANÉ` = zostane so žltým odznakom; "1,5i byt"
 sa nepočíta za 2-izbový; minimálna plocha `MIN_AREA_M2` (2-izb. 35 m², 3-izb. 50 m²; inzerát bez plochy sa nevyradí).

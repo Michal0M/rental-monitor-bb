@@ -4,8 +4,8 @@ Uprav tento súbor, keď budeš chcieť zmeniť rozsah ceny, typ bytu alebo spr�
 """
 
 # --- Čo hľadáme ---
-# Počet izieb. Garsónky ("garsonka") sa NEberú. 1-izbové sa pridajú, keď sem dopíšeš 1.
-ROOMS = [2, 3]  # neskôr: [1, 2, 3]
+# Počet izieb. Garsónky ("garsonka") sa NEberú. Na stránke sa dá filtrovať podľa počtu izieb.
+ROOMS = [1, 2, 3]
 
 # Cena v EUR za mesiac (tzv. "headline" cena z inzerátu, bez energií, ak sú extra).
 # Tvrdý filter - inzerát mimo rozsahu sa z DB vymaže (nie je "stiahnutý", len nesedí).
@@ -52,7 +52,8 @@ COMPLETENESS_RATIO = 0.9
 # rekonštrukcia"...) a "s energiami", ktoré vo výpise nie sú. Detail sa sťahuje len pre NOVÉ
 # inzeráty a potom raz za DETAIL_REFRESH_DAYS dní (údaje sa ukladajú do DB).
 DETAIL_REFRESH_DAYS = 14
-DETAIL_MAX_PER_RUN = 120         # strop detailov na jeden beh (zvyšok sa dotiahne nasledujúci deň)
+DETAIL_MAX_PER_RUN = 120
+DETAIL_VERSION = 2               # zvýš, ak detail začne poskytovať nové údaje - cache sa jednorazovo obnoví         # strop detailov na jeden beh (zvyšok sa dotiahne nasledujúci deň)
 
 NEW_BADGE_DAYS = 3               # "NOVÉ" badge pre inzeráty videné prvýkrát pred <= N dňami
                                  # (pri úplne prvom behu sa "NOVÉ" nezobrazuje - to je len počiatočný stav)

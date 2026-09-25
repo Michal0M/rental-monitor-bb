@@ -124,7 +124,7 @@ def parse_detail(html: str) -> dict:
       - `<meta name="description" content="2 izbový byt, Prenájom, Banská Bystrica, Novostavba, 58 m², 800 €/mes., ...">`
         -> stav bytu je časť medzi mestom a plochou (chýba, ak ho inzerent nevyplnil);
       - hlavný cenový riadok `<p data-test-id="text">720 €/mes. s energiami</p>` -> "s energiami" = energie v cene.
-    Vracia {"condition_label": str|None, "condition_candidates": [str], "energy_included": True|None}.
+    Vracia {"condition_label": str|None, "condition_candidates": [str], "energy_included": True|None, "description": str}.
     energy_included je True alebo None (absencia "s energiami" ešte nedokazuje, že energie NIE sú v cene).
     """
     soup = BeautifulSoup(html, "html.parser")
@@ -146,7 +146,12 @@ def parse_detail(html: str) -> dict:
         if re.match(r"^\d[\d\s.,]*\s*€\s*/\s*mes", text):
             energy = True if "s energiami" in textutils.fold(text) else None
             break
-    return {"condition_label": label, "condition_candidates": candidates, "energy_included": energy}
+    # Celý popis (výpis ho skracuje): <p id="detail-description">, riadkovanie je v texte ako \n.
+    # Overené 25.9.2026 - sú tam napr. "Energie a správa 100€", "Garážové parkovacie miesto 50 €", "SPOLU 900€".
+    desc_el = soup.find(id="detail-description")
+    description = desc_el.get_text("\n", strip=True) if desc_el else ""
+    return {"condition_label": label, "condition_candidates": candidates, "energy_included": energy,
+            "description": description}
 
 
 def fetch_detail(url: str) -> dict:
