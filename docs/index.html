@@ -20,7 +20,13 @@
   .controls button.room-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
   .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:14px; }
   .card { background:var(--card-bg); border:1px solid var(--border); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+  .card { position:relative; }
   .card[data-cat="removed"] { opacity:.5; }
+  .fav-btn { position:absolute; top:8px; right:8px; z-index:2; width:34px; height:34px; border-radius:50%; border:none; cursor:pointer;
+             background:rgba(15,17,21,.7); color:#fff; font-size:20px; line-height:34px; padding:0; }
+  .fav-btn:hover { background:rgba(15,17,21,.9); }
+  .fav-btn.on { color:var(--yellow); }
+  .card.is-fav { border-color:var(--yellow); }
   .card-photo-link { display:block; }
   .card-photo { width:100%; height:170px; object-fit:cover; background:#000; display:block; }
   .card-photo-placeholder { align-items:center; justify-content:center; color:var(--text-dim); font-size:12px; background:#15171c; display:flex; }
@@ -51,20 +57,21 @@
 </head>
 <body>
   <h1>🏠 Prenájmy bytov · Banská Bystrica</h1>
-  <div class="subtitle">Aktualizované: 2026-09-26 05:41 UTC · rozsah 400–800 € · 1/2/3-izbové</div>
-  <div class="run-status">nehnutelnosti.sk: OK (180 inzerátov, 2026-09-26 05:40 UTC) · reality.sk: nedostupný (network, 2026-09-26 05:41 UTC) - nepovinný zdroj, dáta z nehnutelnosti.sk sú úplné</div>
+  <div class="subtitle">Aktualizované: 2026-09-26 09:25 UTC · rozsah 400–800 € · 1/2/3-izbové</div>
+  <div class="run-status">nehnutelnosti.sk: OK (181 inzerátov, 2026-09-26 09:25 UTC) · reality.sk: nedostupný (network, 2026-09-26 09:25 UTC) - nepovinný zdroj, dáta z nehnutelnosti.sk sú úplné</div>
   <div class="controls">
+    <button class="filter-btn" data-filter="fav" data-label="★ Obľúbené">★ Obľúbené (0)</button>
     <button class="filter-btn active" data-filter="good" data-label="Novostavba / rekonštrukcia">Novostavba / rekonštrukcia (82)</button>
-    <button class="filter-btn" data-filter="unsure" data-label="Neistý stav">Neistý stav (38)</button>
+    <button class="filter-btn" data-filter="unsure" data-label="Neistý stav">Neistý stav (39)</button>
     <button class="filter-btn" data-filter="old" data-label="Pôvodný stav">Pôvodný stav (8)</button>
     <button class="filter-btn" data-filter="removed" data-label="Stiahnuté">Stiahnuté (0)</button>
-    <button class="filter-btn" data-filter="all" data-label="Všetky">Všetky (128)</button>
+    <button class="filter-btn" data-filter="all" data-label="Všetky">Všetky (129)</button>
   </div>
   <div class="controls">
     <span class="sort-label">Izby:</span>
-    <button class="room-btn active" data-rooms="all" data-label="Všetky izby">Všetky izby (128)</button>
+    <button class="room-btn active" data-rooms="all" data-label="Všetky izby">Všetky izby (129)</button>
     <button class="room-btn" data-rooms="1" data-label="1-izbové">1-izbové (42)</button>
-    <button class="room-btn" data-rooms="2" data-label="2-izbové">2-izbové (49)</button>
+    <button class="room-btn" data-rooms="2" data-label="2-izbové">2-izbové (50)</button>
     <button class="room-btn" data-rooms="3" data-label="3-izbové">3-izbové (37)</button>
   </div>
   <div class="controls">
@@ -76,8 +83,9 @@
   </div>
   <div id="grid" class="grid">
     
-    <div class="card" data-cat="good" data-rooms="1" data-total="400" data-ppm2="15.38"
+    <div class="card" data-cat="good" data-pid="JuCC4i24xgu" data-rooms="1" data-total="400" data-ppm2="15.38"
          data-area="26.0" data-first="1790357829">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuCC4i24xgu/prenajom-jednoizbovy-tehlovy-byt-26-m2-banska-bystrica-centrum" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/ObArFE07m_fss?st=ZndNwmEifa7cTDqRex2eTjHatXpn9ls5QQKgqOpkSqM&amp;ts=1784133506&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -92,8 +100,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="450" data-ppm2="14.52"
+    <div class="card" data-cat="unsure" data-pid="Jus_8EyL1RH" data-rooms="1" data-total="450" data-ppm2="14.52"
          data-area="31.0" data-first="1790357758">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Jus_8EyL1RH/na-prenajom-od-vlastnika-1-izbovy-byt-v-banskej-bystrici-na-ul-na-uhlisku-14" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Nvb3hHXmJ_fss?st=eyPI4mfmTXqkAqWT0CSL6Lx8Uh056Sk-dPOSKBlZQsw&amp;ts=1790321422&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -108,8 +117,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="450" data-ppm2="15.00"
+    <div class="card" data-cat="unsure" data-pid="Julf4SJIGXf" data-rooms="1" data-total="450" data-ppm2="15.00"
          data-area="30.0" data-first="1790357921">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Julf4SJIGXf/jednoizbovy-byt-v-rd-v-pokojnej-lokalite" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/ajDOdq78C_fss?st=pzDoNhJSfIOTOUeaXp1ZyaPNAgF3upBriC2p0f9W_nw&amp;ts=1789679410&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span></div>
@@ -124,8 +134,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="450" data-ppm2="14.38"
+    <div class="card" data-cat="unsure" data-pid="JuAtABjRf7g" data-rooms="1" data-total="450" data-ppm2="14.38"
          data-area="31.3" data-first="1790357951">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuAtABjRf7g/exkluzivne-na-prenajom-1-izbovy-byt-na-moskovskej-ulici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/3x-LaG4w5_fss?st=EIlD_3FmzTrDEJOKBtl8t2mu37gF5cWe4wmDRHCl6Pc&amp;ts=1788985416&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -140,8 +151,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="460" data-ppm2="16.43"
+    <div class="card" data-cat="unsure" data-pid="Jul56npqjDq" data-rooms="1" data-total="460" data-ppm2="16.43"
          data-area="28.0" data-first="1790358048">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Jul56npqjDq/1-izbovy-bauring-na-prenajom-banska-bystrica-moskovska-ulica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/EosV-1iPM_fss?st=iaris9gOjqsrW2zIZhkm2OzcmuBslOMt7ip0vqOhWv0&amp;ts=1782912576&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Nezariadený</span></div>
@@ -156,8 +168,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="3" data-total="470" data-ppm2="5.80"
+    <div class="card" data-cat="unsure" data-pid="JuzvSMTJROA" data-rooms="3" data-total="470" data-ppm2="5.80"
          data-area="81.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuzvSMTJROA/prenajmeme-velky-3-izb-byt-v-idealnej-lokalite-bb" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/IhMHUqVp3_fss?st=dIHLQKDTFzNbytiGVSpS6QdD3ZR0AByi8En5ltz6gbg&amp;ts=1789710311&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
@@ -172,8 +185,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="480" data-ppm2="12.63"
+    <div class="card" data-cat="unsure" data-pid="Juu88wn7bxd" data-rooms="1" data-total="480" data-ppm2="12.63"
          data-area="38.0" data-first="1790357944">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Juu88wn7bxd/exkluzivne-na-prenajom-1izbbytu-v-b-bystrici-ul-mladeznicka" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/BlriU53ML_fss?st=Xt5etrH-DTvtJA9JpwxgnfkLDiHGxT4aJGLzVIQv7dg&amp;ts=1777991671&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -188,8 +202,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="490" data-ppm2="12.56"
+    <div class="card" data-cat="unsure" data-pid="JuFLV_K7Upg" data-rooms="1" data-total="490" data-ppm2="12.56"
          data-area="39.0" data-first="1790357966">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuFLV_K7Upg/prenajom-1i-byt-od-1026-0627" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/htBqKtfpr_fss?st=C3bD8WIXBFkSnGymeMVzjnF0F8I3O1uubh_7iKezRdM&amp;ts=1789810886&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -204,8 +219,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="500" data-ppm2="13.89"
+    <div class="card" data-cat="good" data-pid="JuJw7rN8spw" data-rooms="1" data-total="500" data-ppm2="13.89"
          data-area="36.0" data-first="1790357792">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuJw7rN8spw/na-prenajom-1i-byt-v-srdci-banskej-bystrice" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/KdJKNLLEj_fss?st=R34fL_Jw8WTP0pAZQbosupWazIYAQ8STXEh3CeLQnOA&amp;ts=1790345587&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -220,8 +236,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="500" data-ppm2="16.84"
+    <div class="card" data-cat="unsure" data-pid="JuoJrDvWTYH" data-rooms="1" data-total="500" data-ppm2="16.84"
          data-area="29.7" data-first="1790357821">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuoJrDvWTYH/prenajom-1-izbovy-byt-s-peknym-vyhladom-thk" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/bRJmW5mvd_fss?st=NPGmX94G6G5S7Hsl4UEMePIesmFHGBT4CG_KQLVM1bQ&amp;ts=1790324567&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -236,8 +253,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="500" data-ppm2="16.67"
+    <div class="card" data-cat="unsure" data-pid="JurnZem-F3H" data-rooms="1" data-total="500" data-ppm2="16.67"
          data-area="30.0" data-first="1790357836">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JurnZem-F3H/rezervovane-1-izbovy-byt-30-m2-59-posch-tulska-b-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/4txtmalT7_fss?st=kJb_dA8Mvvvbin73Xg3Hil72TKewnn9c4ao-dkKOP-o&amp;ts=1787136982&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge badge-warn" title="V titulku inzerátu je REZERVOVANÉ">Rezervované</span><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -252,8 +270,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="500" data-ppm2="16.67"
+    <div class="card" data-cat="good" data-pid="Ju-9zy7eloG" data-rooms="1" data-total="500" data-ppm2="16.67"
          data-area="30.0" data-first="1790357873">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju-9zy7eloG/prenajom-1izbovy-byt-30-m2-foncorda-banska-bystrica-500euromes" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/uBZjOiEE3_fss?st=nRxlybqulxlUeMISsJ4EPRN7WjDUlxbEdkvgVWz_aU4&amp;ts=1787161167&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -268,8 +287,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="500" data-ppm2="16.67"
+    <div class="card" data-cat="good" data-pid="Jus8x2dcKbh" data-rooms="1" data-total="500" data-ppm2="16.67"
          data-area="30.0" data-first="1790357888">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Jus8x2dcKbh/prenajom-1i-byt-bb-foncorda-tulska-zariadenie" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/KIXDof8VM_fss?st=8pTSKY26I3K4Ow5RVLGiPBrsHr3yzmKlvfwD8axp-EY&amp;ts=1790010245&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -284,8 +304,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="500" data-ppm2="17.24"
+    <div class="card" data-cat="good" data-pid="Jurssp83XCB" data-rooms="1" data-total="500" data-ppm2="17.24"
          data-area="29.0" data-first="1790357895">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Jurssp83XCB/prenajom-1i-byt-bb-foncorda-moskovska-zariadenie" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/F3LNMvLch_fss?st=5s0oixoXBStg7qDm2BqH6IvdkvJLO5Zm3i3DAs2r-d8&amp;ts=1790009931&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -300,8 +321,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="500" data-ppm2="17.24"
+    <div class="card" data-cat="good" data-pid="JuMRUxGgBVI" data-rooms="1" data-total="500" data-ppm2="17.24"
          data-area="29.0" data-first="1790357960">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuMRUxGgBVI/1-izbovy-byt-typu-bauring-na-prenajom-moskovska-ul-foncorda-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/slZA7GQdN_fss?st=2oEmJLjAwDXRYTJK0YBvcxULlLnYuVhD2aC7sNtqRuo&amp;ts=1789824074&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -316,8 +338,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="500" data-ppm2="17.24"
+    <div class="card" data-cat="good" data-pid="JuelLOQIFn_" data-rooms="1" data-total="500" data-ppm2="17.24"
          data-area="29.0" data-first="1790357974">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuelLOQIFn_/na-prenajom-1-izb-byt-garzonka-banska-bystrica-novostavba" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/EMC1d7-Gs_fss?st=5Ap1UgrQIu1AJ67Vb0bqPLpTai2wdtKZtR0eg_rbaWI&amp;ts=1774858219&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -332,8 +355,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="500" data-ppm2="12.36"
+    <div class="card" data-cat="unsure" data-pid="JuMo1l-M66O" data-rooms="1" data-total="500" data-ppm2="12.36"
          data-area="40.44" data-first="1790358006">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuMo1l-M66O/prenajom-1-izbovy-byt-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/-6T2ib4MQ_fss?st=Cpt5_0kCwmfj68uO9hoNDRa_TS3DwAPKnHK8mrjfVoo&amp;ts=1781016747&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -348,8 +372,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="530" data-ppm2="17.07"
+    <div class="card" data-cat="good" data-pid="Ju3FJ3fqX-T" data-rooms="1" data-total="530" data-ppm2="17.07"
          data-area="29.0" data-first="1790357771">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju3FJ3fqX-T/prerobenyzariadeny-1-izb-byt-na-foncorde" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Lptb_S4lv_fss?st=Ea2t1M3MoRzRZAb1l8W4J53bR7jPBrnPgZ4RUpwK8Ac&amp;ts=1780999837&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -364,8 +389,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="530" data-ppm2="13.95"
+    <div class="card" data-cat="good" data-pid="JuqGi_EplCc" data-rooms="1" data-total="530" data-ppm2="13.95"
          data-area="38.0" data-first="1790357864">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuqGi_EplCc/pekny-1-izbbyt-38m2-zariadeny-centrum-mesta-na-peso-horna-ul" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/jvKMsJn-9_fss?st=XIP6Qr0edlvzgOkZVKimkWgBvl-8HT_ohdwLoal8nxU&amp;ts=1789362246&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie za príplatok</span><span class="badge badge-info">Zariadený</span></div>
@@ -380,8 +406,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="530" data-ppm2="14.72"
+    <div class="card" data-cat="good" data-pid="JugARgzMdTV" data-rooms="1" data-total="530" data-ppm2="14.72"
          data-area="36.0" data-first="1790357937">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JugARgzMdTV/svetly-1-izbovy-byt-v-novostavbe-na-prenajom-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/l_N6CeSLs_fss?st=SKpKgMB_NlF9-9OBE9uunSvUmN-E3-1wzpqb3ayqK3M&amp;ts=1789059397&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie za príplatok</span><span class="badge badge-info">Zariadený</span></div>
@@ -396,8 +423,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="540" data-ppm2="9.82"
+    <div class="card" data-cat="unsure" data-pid="JuuJOlF20QS" data-rooms="2" data-total="540" data-ppm2="9.82"
          data-area="55.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuuJOlF20QS/2-izbovy-byt-mateja-bela" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/z21mhryoE_fss?st=Qos3wr1OuddniX4fGH-BoNAUu5IJ2rmSXk0qhzAd9Xc&amp;ts=1790084524&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
@@ -412,8 +440,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="540" data-ppm2="13.41"
+    <div class="card" data-cat="good" data-pid="Juq6-mhS8xW" data-rooms="1" data-total="540" data-ppm2="13.41"
          data-area="40.28" data-first="1790358062">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Juq6-mhS8xW/prenajom-1-izb-bytu-v-centre-mesta-banska-bystrica-kompletne-zrekonstruovany" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL3JzZg==/CbChc29Za_fss?st=EX9r7uWEKMLeB-M5QvTfEU7TFz19ckSUmGSTnh_U5GA&amp;ts=1650453186&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -428,8 +457,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="3" data-total="550" data-ppm2="6.96"
+    <div class="card" data-cat="unsure" data-pid="Ju-5UCsMhmy" data-rooms="3" data-total="550" data-ppm2="6.96"
          data-area="79.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju-5UCsMhmy/prenajom-trojizbovy-byt-79-m2-banska-bystrica-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/773usBEtw_fss?st=Yqh5pkxZwammJXn5UbOqFwp0u68GLobG6QGZvZ7ebJA&amp;ts=1780742626&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Nezariadený</span></div>
@@ -444,8 +474,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="550" data-ppm2="19.64"
+    <div class="card" data-cat="good" data-pid="JuCLvD_YZFO" data-rooms="1" data-total="550" data-ppm2="19.64"
          data-area="28.0" data-first="1790357765">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuCLvD_YZFO/na-prenajom-1-izbovy-byt-hurbanova-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/0TKpo2eWp_fss?st=Tw4F9lBNk-a-l4AnocxpXALFfgcpNSq51wIR_oyY2Fo&amp;ts=1779798634&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-info">Zariadený</span></div>
@@ -460,8 +491,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="550" data-ppm2="18.33"
+    <div class="card" data-cat="unsure" data-pid="JuBAib5DJOU" data-rooms="1" data-total="550" data-ppm2="18.33"
          data-area="30.0" data-first="1790357785">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuBAib5DJOU/1-izb-byt-prenajom-banska-bystrica-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/T93j9KnPZ_fss?st=GHE0iSDBoRiSJe4VVsApcUlH1w9YV3K3IH2QUtII9Ss&amp;ts=1790010537&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -476,8 +508,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="550" data-ppm2="18.07"
+    <div class="card" data-cat="good" data-pid="Jubxt-i89re" data-rooms="1" data-total="550" data-ppm2="18.07"
          data-area="30.44" data-first="1790357844">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Jubxt-i89re/1-izbovy-byt-s-parkingom-na-prenajom-v-sasovej-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/hqZKmATx0_fss?st=zzD3i1DPmrr6ND3iClD5aOMZovubv0wpVnrOAYlsqGY&amp;ts=1789385523&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span></div>
@@ -492,8 +525,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="550" data-ppm2="14.47"
+    <div class="card" data-cat="good" data-pid="JuWEhzVVd6Q" data-rooms="1" data-total="550" data-ppm2="14.47"
          data-area="38.0" data-first="1790357928">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuWEhzVVd6Q/prenajmem-1-izbovy-byt-v-sasovej" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/kGqL_VGzd_fss?st=Sdlm_upHJIXQdr6q_Xj6gz1TtfZHChsrjIuWU8sdKig&amp;ts=1788905783&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
@@ -508,8 +542,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="550" data-ppm2="13.75"
+    <div class="card" data-cat="good" data-pid="Ju4XSksKPw0" data-rooms="1" data-total="550" data-ppm2="13.75"
          data-area="40.0" data-first="1790358055">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju4XSksKPw0/pripravujeme-1-izbbyt-40m2-zariadeny-centrum-mesta-na-peso-trieda-snp" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/UlFroMNoO_fss?st=4p9hjLGf71LieDzSSHvPD4JiUU3jAnx14PLFJ6-tLu4&amp;ts=1759168513&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -524,8 +559,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="560" data-ppm2="14.74"
+    <div class="card" data-cat="good" data-pid="JugrK_yk3xb" data-rooms="1" data-total="560" data-ppm2="14.74"
          data-area="38.0" data-first="1790357850">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JugrK_yk3xb/1-izbbyt-38m2-parkovacie-miesto-zariadeny-centrum-mesta-na-peso-horna-ul" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/tlGsNbRQ4_fss?st=jzxwwXFoLVaL7f9FNM8ZOcyp5wKhIMq7yefEH5Rma5M&amp;ts=1789119607&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -540,8 +576,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="560" data-ppm2="18.67"
+    <div class="card" data-cat="good" data-pid="JuxIytnoaWx" data-rooms="1" data-total="560" data-ppm2="18.67"
          data-area="30.0" data-first="1790358041">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuxIytnoaWx/na-prednajom-pekny-kompletne-zariadeny-1-izbovy-byt-30m2-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/j8sVyL9Cm_fss?st=OhoNB0PWzcQ6q-71k3IzlS8-8WvASbe-GOUCoDeY6eU&amp;ts=1767865931&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -556,8 +593,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="570" data-ppm2="11.88"
+    <div class="card" data-cat="unsure" data-pid="Ju4PLN8-19a" data-rooms="2" data-total="570" data-ppm2="11.88"
          data-area="48.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju4PLN8-19a/zariadeny-2-izbovy-byt-lodzia-satnik-pivnica-s-dobrym-parkovanim-sasova" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL3JzZg==/SISiNwL6h__fss?st=gUCwEszrejG8Fijr_caAAxtFYbiGlIUfHOmnhT90HpY&amp;ts=1723624028&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -572,8 +610,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="570" data-ppm2="15.00"
+    <div class="card" data-cat="good" data-pid="JueVNO4khdQ" data-rooms="1" data-total="570" data-ppm2="15.00"
          data-area="38.0" data-first="1790357778">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JueVNO4khdQ/1-izb-byt-38-m2-sirsie-centrum-banska-bystrica-foncorda-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/h-81FQpqc_fss?st=pNpW3dxL9lujz5i-41DZZTLrNTgmPdI8FEOIs5Hlj0M&amp;ts=1783017565&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -588,8 +627,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="570" data-ppm2="15.00"
+    <div class="card" data-cat="good" data-pid="JuNQ6KQlvFK" data-rooms="1" data-total="570" data-ppm2="15.00"
          data-area="38.0" data-first="1790357911">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuNQ6KQlvFK/prenajom-1-izboveho-bytu-v-banskej-bystrici-cast-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/_TAHUlVKX_fss?st=o-eAeAJS9v_J1izAWqnJe3nFLQuRkpzypfTQPTlLQ7Q&amp;ts=1789397113&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
@@ -604,8 +644,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="570" data-ppm2="13.57"
+    <div class="card" data-cat="good" data-pid="JuNhqZTVB1t" data-rooms="1" data-total="570" data-ppm2="13.57"
          data-area="42.0" data-first="1790358027">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuNhqZTVB1t/prenajom-1-izbovy-byt-po-kompletnej-rekonstrukcii-foncorda-usvit" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/nZDp3cuQW_fss?st=angEJyCyH5TNluzsydS8eGe4ny7hl5rNYktAommZPTQ&amp;ts=1783937472&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -620,8 +661,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="574" data-ppm2="14.72"
+    <div class="card" data-cat="good" data-pid="JuoURyQVOPm" data-rooms="2" data-total="574" data-ppm2="14.72"
          data-area="39.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuoURyQVOPm/top-living-prenajom-2-izb-apartmanu-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/YAAEXPg3Y_fss?st=ZNqW1zilSKgitriBP8zspkefLei7BoutWYeeF7gCbko&amp;ts=1768329439&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie +40 €/mes.</span><span class="badge badge-info">Zariadený</span></div>
@@ -636,8 +678,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="574" data-ppm2="14.72"
+    <div class="card" data-cat="good" data-pid="Ju-AUjIYNIT" data-rooms="1" data-total="574" data-ppm2="14.72"
          data-area="39.0" data-first="1790357857">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju-AUjIYNIT/apartman-na-prenajom-uhlisko-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/UsoU0o1tA_fss?st=xgT2_TFYKjyNlpPLwMzlXqNxLjzV_EcX7lvpdmECQuU&amp;ts=1779787971&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie +40 €/mes.</span><span class="badge badge-info">Zariadený</span></div>
@@ -652,8 +695,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="580" data-ppm2="14.50"
+    <div class="card" data-cat="good" data-pid="JuHzKTRwe0w" data-rooms="1" data-total="580" data-ppm2="14.50"
          data-area="40.0" data-first="1790357800">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuHzKTRwe0w/na-prenajom-nadstandardny-1-izbovy-byt-centrum-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/w74LARBz8_fss?st=Cizhtn7NTc3j6_oFh1_lWtbRQLWTa1CCttA1KtOOkAI&amp;ts=1790171220&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie +80 €/mes.</span></div>
@@ -668,8 +712,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="580" data-ppm2="16.11"
+    <div class="card" data-cat="unsure" data-pid="JuJuAfvBwtY" data-rooms="1" data-total="580" data-ppm2="16.11"
          data-area="36.0" data-first="1790357991">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuJuAfvBwtY/na-prenajom-moderny-1-izbovy-byt-po-rekonstrukcii-banska-bystrica-centrum-n1b901zl" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/JaT85w4lB_fss?st=hXt3IgIuptZmspijugs92IALNaxnoIp2351wn24hsZ4&amp;ts=1786541739&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -684,8 +729,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="580" data-ppm2="19.33"
+    <div class="card" data-cat="good" data-pid="JuHzfC0srou" data-rooms="1" data-total="580" data-ppm2="19.33"
          data-area="30.0" data-first="1790358020">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuHzfC0srou/ab-estate-na-prenajom-od-110-1-izbovy-byt-v-novostavbe-na-kyjevskom-namesti" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/r8KJekAsr_fss?st=dhRQPNTxpGEB6YuhO6SP8Bk66kn1_b4d0YETOlTFcso&amp;ts=1786531015&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -700,8 +746,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="600" data-ppm2="10.91"
+    <div class="card" data-cat="good" data-pid="Ju9rJDyAlKr" data-rooms="2" data-total="600" data-ppm2="10.91"
          data-area="55.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju9rJDyAlKr/2-izbovy-byt-55-m2-po-obnove-pivnica-sidlisko-bb-600-euro-vratane-energii" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/85GpCWTJL_fss?st=SXiIb93LVBMs839eHD2ktoaQ0EiB-Bpvmmyzth82IM0&amp;ts=1789378106&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Nezariadený</span></div>
@@ -716,8 +763,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="600" data-ppm2="9.84"
+    <div class="card" data-cat="unsure" data-pid="Ju2o3TsPcdR" data-rooms="2" data-total="600" data-ppm2="9.84"
          data-area="61.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju2o3TsPcdR/prenajom-velky-2i-byt-usvit-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/akyJWLpYC_fss?st=ZhE3oxZpw-ftSD7ePx2vcsbZoOJUI5L609HBnk6J6ro&amp;ts=1788607703&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -732,8 +780,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="old" data-rooms="2" data-total="600" data-ppm2="6.74"
+    <div class="card" data-cat="old" data-pid="JuJL6GXwLgA" data-rooms="2" data-total="600" data-ppm2="6.74"
          data-area="89.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuJL6GXwLgA/2-izbovy-byt-v-rodinnom-dome-na-prenajom-malachov" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/H_wGUixn2_fss?st=UvavlsX0_bMeps3ZKnOZf4mg1uVYeLxeYO5O67S4sVs&amp;ts=1783593576&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-old" title="štruktúrované pole portálu">Pôvodný stav</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
@@ -748,8 +797,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="600" data-ppm2="10.34"
+    <div class="card" data-cat="unsure" data-pid="JujuYYRoL22" data-rooms="2" data-total="600" data-ppm2="10.34"
          data-area="58.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JujuYYRoL22/lokalita-fortnicka-centrum-bb-prenajom-2-izb-bytu-58-m2-v-tehlovom-bytovom-dome-s-pivnicou-a-1x-parkovacim-rezidencnym-miestom-ulica-m-razus" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/F2JJqhJTT_fss?st=RwVSAr5OymNyoP2ag4M4oyFpUIu-eFswMbjqHxQYILA&amp;ts=1789147491&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
@@ -764,8 +814,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="600" data-ppm2="9.47"
+    <div class="card" data-cat="unsure" data-pid="Ju-nHbriolN" data-rooms="2" data-total="600" data-ppm2="9.47"
          data-area="63.38" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju-nHbriolN/hd-reality-prenajom-2-izboveho-bytu-na-slnecnej" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/1iFP5ToJ__fss?st=lnGmGFG6jeIMK4iehC19QEsAelAzemuXQm79n-ln50M&amp;ts=1786374445&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span></div>
@@ -780,8 +831,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="600" data-ppm2="11.11"
+    <div class="card" data-cat="unsure" data-pid="Jugcmncw4V7" data-rooms="2" data-total="600" data-ppm2="11.11"
          data-area="54.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Jugcmncw4V7/prenajom-2-izboveho-bytu" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/z35MFn22i_fss?st=wE5j9n48nZJI28_HJajV-9cSnQFvJy8Ro5NmSRInLv8&amp;ts=1788331805&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -796,8 +848,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="old" data-rooms="1" data-total="600" data-ppm2="0.00"
+    <div class="card" data-cat="old" data-pid="JuABlHmhUJr" data-rooms="1" data-total="600" data-ppm2="0.00"
          data-area="0" data-first="1790357808">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuABlHmhUJr/1-izbovy-byt-v-rodinnom-dome-s-balkonom-na-prenajom-v-banskej-bystrici-novy-svet" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/JhExMYqfh_fss?st=KUJMN-l55zYUf3MZeEdjucr2ZkjmWctTCPGd9gLmJPU&amp;ts=1789727976&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-old" title="štruktúrované pole portálu">Pôvodný stav</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -812,8 +865,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="old" data-rooms="1" data-total="600" data-ppm2="15.00"
+    <div class="card" data-cat="old" data-pid="JuZkYZZvBwm" data-rooms="1" data-total="600" data-ppm2="15.00"
          data-area="40.0" data-first="1790357815">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuZkYZZvBwm/priestranny-1-izbovy-byt-s-balkonom-a-garazovym-statim-v-centre-mesta" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/hFM7qkZOM_fss?st=fQdl6Nnb0R7thQbFPU0ijb0NgGDlJc6xsvIbdAVHpBY&amp;ts=1788353801&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-old" title="štruktúrované pole portálu">Pôvodný stav</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -828,8 +882,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="600" data-ppm2="15.00"
+    <div class="card" data-cat="good" data-pid="Ju_HEujTO6b" data-rooms="1" data-total="600" data-ppm2="15.00"
          data-area="40.0" data-first="1790357904">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju_HEujTO6b/prenajom-1-izboveho-bytu-po-rekonstrukcii" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Z0zeTMTa9_fss?st=Ixx1yDdSK3ciTOgayVHunbVjA06fpsNGFq3wWLb_fsY&amp;ts=1789578093&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -844,8 +899,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="1" data-total="600" data-ppm2="15.47"
+    <div class="card" data-cat="unsure" data-pid="JuZR09qiudr" data-rooms="1" data-total="600" data-ppm2="15.47"
          data-area="38.78" data-first="1790357999">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuZR09qiudr/na-prenajom-1-izbovy-byt-banska-bystrica-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Ha0-HZtDU_fss?st=0gzJNBuIto-s7x2mxM9AzCH3YyKpyFogcna1l3XehAw&amp;ts=1785392992&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -860,8 +916,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="615" data-ppm2="13.97"
+    <div class="card" data-cat="good" data-pid="JuCbhxDCBdH" data-rooms="1" data-total="615" data-ppm2="13.97"
          data-area="44.03" data-first="1790358034">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuCbhxDCBdH/prenajom-stylovy-priestor-4403-m2-v-historickom-centre-banskej-bystrice-bakossova-10" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/5akSqW3nE_fss?st=hi0NhURGjBurwAXVxzIp34S7GvTUYnj10XTITH69mk8&amp;ts=1785927305&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie +80 €/mes.</span></div>
@@ -876,8 +933,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="640" data-ppm2="12.08"
+    <div class="card" data-cat="unsure" data-pid="JuAI06C-0f8" data-rooms="2" data-total="640" data-ppm2="12.08"
          data-area="53.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuAI06C-0f8/prenajom-2i-pekny-byt-s-balkonom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/miGNX_9lG_fss?st=ZPqNQDz7dYIXNyV_uB6eEu69iPSNiZ4YuUqyXU7KNS4&amp;ts=1788558617&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -892,8 +950,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="650" data-ppm2="11.40"
+    <div class="card" data-cat="unsure" data-pid="Ju6LTUHH4Wd" data-rooms="2" data-total="650" data-ppm2="11.40"
          data-area="57.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju6LTUHH4Wd/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/c3UKx_1Ei_fss?st=VtYcpT5V2QbaQKKYFZf4-hOJAtYeWj2qbDNDTouGlzo&amp;ts=1785703036&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span></div>
@@ -908,8 +967,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="650" data-ppm2="9.85"
+    <div class="card" data-cat="good" data-pid="Ju_jVEFAVx8" data-rooms="2" data-total="650" data-ppm2="9.85"
          data-area="66.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju_jVEFAVx8/rfreality-2-izb-moderny-zariadeny-byt-v-novostavbe-prsianska-terasa" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/FEmvnqAeD_fss?st=BU5EwcVlTS5YpzXfjZVqLfTDzD8Ggl50M5bL_9AIq5M&amp;ts=1790237233&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie +30 €/mes.</span><span class="badge badge-info">Zariadený</span></div>
@@ -924,8 +984,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="650" data-ppm2="14.13"
+    <div class="card" data-cat="good" data-pid="JuzDjbjdYMT" data-rooms="2" data-total="650" data-ppm2="14.13"
          data-area="46.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuzDjbjdYMT/sirsie-centrum-mesta-bb-prenajom-2-izb-bytu-4621-m2-po-komplet-rekonstrukcii-od-bytoveho-architekta-s-balkonom-pivnicou-a-vonkajsim-parkovacim" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/UKSnLJM2X_fss?st=O-rfob1KZZZMxyQp97HbRiYaKd1j1xwgvuXXK7-a6II&amp;ts=1789150065&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -940,8 +1001,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="650" data-ppm2="14.13"
+    <div class="card" data-cat="good" data-pid="JuQWqHnQ0su" data-rooms="2" data-total="650" data-ppm2="14.13"
          data-area="46.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuQWqHnQ0su/centrum-bb-prenajom-slnecneho-2-izb-bytu-4636-m2-v-novostavbe-s-balkonom-8-m2-pivnicou-4-m2-a-1x-parkovacim-miestom-ulica-kapitulska" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/kFsi2ZLDi_fss?st=1457JG-gizuEstWcafAkuG_zdIroqPPMdiWbCR72Zmw&amp;ts=1789148311&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -956,8 +1018,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="650" data-ppm2="10.48"
+    <div class="card" data-cat="unsure" data-pid="Jujhpgy1LzeS" data-rooms="2" data-total="650" data-ppm2="10.48"
          data-area="62.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Jujhpgy1LzeS/na-prenajom-2-izbovy-byt-v-centre-mesta-cast-fortnicka" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/uDYzvkvMM_fss?st=kvH_Y5K5BI9TQrCXjsnkxzp2pVOX-uJX784SJ3p687I&amp;ts=1777991671&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -972,8 +1035,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="3" data-total="650" data-ppm2="9.15"
+    <div class="card" data-cat="unsure" data-pid="JudCD00Lzrm" data-rooms="3" data-total="650" data-ppm2="9.15"
          data-area="71.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JudCD00Lzrm/3-izbovy-byt-s-lodziou-a-pivnicou-banska-bystrica-sasova" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/fC0JKFzga_fss?st=fs8Bfwkf-sznT7H9K13TR6OfkiU1ZFIyhiJokk8cWgk&amp;ts=1789642798&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -988,8 +1052,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="650" data-ppm2="23.58"
+    <div class="card" data-cat="good" data-pid="JuSlT1fO38Y" data-rooms="1" data-total="650" data-ppm2="23.58"
          data-area="27.57" data-first="1790357881">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuSlT1fO38Y/na-prenajom-kompletne-zariadeny-1-izbovy-byt-s-parkovacim-miestom-v-garazi" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/qhG6b2IWq_fss?st=p6sd2YbPX-VDBG7a5P0HrXkaVOwhHNMKzEnRJw-nLB4&amp;ts=1788761727&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -1004,8 +1069,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="650" data-ppm2="21.67"
+    <div class="card" data-cat="good" data-pid="Ju0HxjfPs9N" data-rooms="1" data-total="650" data-ppm2="21.67"
          data-area="30.0" data-first="1790358013">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju0HxjfPs9N/prenajom-1-izboveho-bytu-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/8l-Y6bo4U_fss?st=aRNZj9AqFWkweFTzPkG3a5xvhglGkHoszIlCMKJNCms&amp;ts=1778695819&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -1020,8 +1086,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="660" data-ppm2="12.00"
+    <div class="card" data-cat="unsure" data-pid="JuH_gDr6WKc" data-rooms="2" data-total="660" data-ppm2="12.00"
          data-area="55.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuH_gDr6WKc/2izbovy-byt-s-pivnicou-a-vnutornym-parkovanim" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/ZFiB29mDi_fss?st=s5_OuT-0BW1TenMj8GxSByMizUdmkajLWajzmH9IzCM&amp;ts=1790284641&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -1036,8 +1103,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="660" data-ppm2="7.33"
+    <div class="card" data-cat="good" data-pid="JuQFlcHhM-_" data-rooms="3" data-total="660" data-ppm2="7.33"
          data-area="90.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuQFlcHhM-_/bez-provizie-rk-dam-do-prenajmu-3-izbovy-byt-v-centre-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/QlWRAzZcA_fss?st=zNQsCifuHi5lMdkpQk4P8M39XLDEpwEAweHfHEVmRL4&amp;ts=1754988190&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie za príplatok</span><span class="badge badge-info">Zariadený</span></div>
@@ -1052,8 +1120,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="670" data-ppm2="12.25"
+    <div class="card" data-cat="unsure" data-pid="JuIn8YhWlDi" data-rooms="2" data-total="670" data-ppm2="12.25"
          data-area="54.7" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuIn8YhWlDi/prenajom-2-izbovy-byt-banska-bystrica-mestska-cast-sidlisko-snp" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/3go_Hz6Ev_fss?st=1_flPZNb90hZLGp9ZC8AcYvzJGNyDQf9TG4t0fwxcIQ&amp;ts=1786977721&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1068,8 +1137,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="680" data-ppm2="11.72"
+    <div class="card" data-cat="unsure" data-pid="JuXKh6owugZ" data-rooms="2" data-total="680" data-ppm2="11.72"
          data-area="58.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuXKh6owugZ/2-izbovy-byt-prenajom-trieda-snp-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/prAL6ZP3h_fss?st=8JbbUorCtbAQaLfM-n-GU2lXqAn5wKGEZnlXxwqKPKY&amp;ts=1789558661&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span><span class="badge badge-info">Panelák</span></div>
@@ -1084,8 +1154,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="680" data-ppm2="11.33"
+    <div class="card" data-cat="good" data-pid="JuQ1KTzG-Vv" data-rooms="2" data-total="680" data-ppm2="11.33"
          data-area="60.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuQ1KTzG-Vv/kompletne-zariadeny-2-izbovy-byt-v-radvani-na-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Yl9VRRJYa_fss?st=iSr7lJfoi-iCDFHzrvjdZNma0XJWJjhdMQZtkqaQOOE&amp;ts=1787682959&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge badge-warn" title="V titulku inzerátu je REZERVOVANÉ">Rezervované</span><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1100,8 +1171,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="690" data-ppm2="10.62"
+    <div class="card" data-cat="good" data-pid="JuvYTDFHBFw" data-rooms="2" data-total="690" data-ppm2="10.62"
          data-area="65.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuvYTDFHBFw/happy-house-middle" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/9XrYJZd7F_fss?st=4iQVit08pcqlLkKamNheh33t4Ra5l4GUqjruPnWz4co&amp;ts=1765290514&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span><span class="badge badge-info">Panelák</span></div>
@@ -1116,8 +1188,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="old" data-rooms="2" data-total="690" data-ppm2="11.90"
+    <div class="card" data-cat="old" data-pid="Juf8HMIzK3Z" data-rooms="2" data-total="690" data-ppm2="11.90"
          data-area="58.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Juf8HMIzK3Z/2-izbovy-byt-v-centre-banskej-bystrice-s-balkonom-na-prenajom-na-zelezniciarskej-ulici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/qJfMIAkjm_fss?st=YpgqoRVa7rWpRbD_ZyAeOx4l9uWR2gRIRMhXWDq4K_M&amp;ts=1789727971&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-old" title="štruktúrované pole portálu">Pôvodný stav</span><span class="badge badge-parking">Parkovanie +100 €/mes.</span></div>
@@ -1132,8 +1205,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="690" data-ppm2="13.80"
+    <div class="card" data-cat="good" data-pid="JuBF25TEbyz" data-rooms="2" data-total="690" data-ppm2="13.80"
          data-area="50.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuBF25TEbyz/rezervovany-lokalita-foncorda-prenajom-2-izb-bytu-50-m2-v-novostavbe-s-balkonom-pivnicou-a-parkovacim-miestom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL3JzZg==/t6uRLkbS4_fss?st=n0F2oPKD_iEjMP8A7lz4j2I-iFAqAxry7A39gqgEjQ8&amp;ts=1697821819&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1148,8 +1222,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="690" data-ppm2="13.27"
+    <div class="card" data-cat="unsure" data-pid="JueqaY68M5j" data-rooms="2" data-total="690" data-ppm2="13.27"
          data-area="52.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JueqaY68M5j/halo-reality-prenajom-dvojizbovy-byt-banska-bystrica-sasova-tatranska" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/rs9CJ3B-f_fss?st=UZ_gh9KHDTjZZFyY_g5hXaImgY4va9dLpjrqVWb9IZw&amp;ts=1788444345&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1164,8 +1239,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="690" data-ppm2="10.78"
+    <div class="card" data-cat="good" data-pid="JuYYmOrET0n" data-rooms="2" data-total="690" data-ppm2="10.78"
          data-area="64.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuYYmOrET0n/prenajom-krasny-byt-v-novostavbe-lokalita-radvan-vedla-kauflandu-dlha-ul" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/7nNsBbDH8_fss?st=8nKeqo-QGiL7IJqAH7nUXHWM70t-jogz4-BEWyt2ImU&amp;ts=1751053609&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-info">Zariadený</span></div>
@@ -1180,8 +1256,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="690" data-ppm2="9.20"
+    <div class="card" data-cat="good" data-pid="Ju2YdflI1L2" data-rooms="2" data-total="690" data-ppm2="9.20"
          data-area="75.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju2YdflI1L2/2-izbovy-byt-na-prenajom-na-ul-trieda-snp-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/S5_bNzNhg_fss?st=kUvUJTCA6Ts7yNe9jv65uxN1Az_Pl8eFR9T0F3fZ9-g&amp;ts=1779892391&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span></div>
@@ -1196,8 +1273,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="old" data-rooms="2" data-total="690" data-ppm2="11.50"
+    <div class="card" data-cat="old" data-pid="Ju29nef0FE1" data-rooms="2" data-total="690" data-ppm2="11.50"
          data-area="60.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju29nef0FE1/na-prenajom-priestranny-2-izb-byt-s-parkovanim-na-komenskeho-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/XZ0HMlH0n_fss?st=G6jOpe8-IGOnCtl92yMIeupV6SIVhQnccGy7WVZhzUw&amp;ts=1789211932&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-old" title="štruktúrované pole portálu">Pôvodný stav</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -1212,8 +1290,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="old" data-rooms="3" data-total="690" data-ppm2="10.00"
+    <div class="card" data-cat="old" data-pid="JurVELx-D_O" data-rooms="3" data-total="690" data-ppm2="10.00"
          data-area="69.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JurVELx-D_O/exkluzivne-na-prenajom-3izbbytu-ulthk-v-b-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/D5y3qdC8L_fss?st=1SPU8dbPHVEBvwrWe-n2S7ofiubjFy4ZvGm2EDj8eAI&amp;ts=1751053641&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-old" title="štruktúrované pole portálu">Pôvodný stav</span><span class="badge badge-info">Zariadený</span></div>
@@ -1228,8 +1307,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="old" data-rooms="3" data-total="690" data-ppm2="10.95"
+    <div class="card" data-cat="old" data-pid="JuIY_f8xB4B" data-rooms="3" data-total="690" data-ppm2="10.95"
          data-area="63.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuIY_f8xB4B/exkluzivne-na-prenajom-slnecny-3-izbovy-byt-s-loggiou-tulska-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/tPFuxNByo_fss?st=rp3GH4vDmYabXcJf0KcZVsPwS3CSMECC2OiRtLpuug8&amp;ts=1786456410&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-old" title="štruktúrované pole portálu">Pôvodný stav</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1244,8 +1324,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="700" data-ppm2="8.80"
+    <div class="card" data-cat="good" data-pid="JuHl98t6xVe" data-rooms="2" data-total="700" data-ppm2="8.80"
          data-area="54.56" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuHl98t6xVe/prenajom-velkeho-2-izboveho-bytu-banska-bystrica-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/-o9E-6CCM_fss?st=m7eneMJymK6mHFmrH5fEy2BgHS4V-RBEe90QdgwX0MM&amp;ts=1773294109&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge badge-warn" title="V titulku inzerátu je REZERVOVANÉ">Rezervované</span><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie +50 €/mes.</span><span class="badge badge-info">Zariadený</span></div>
@@ -1260,8 +1341,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="1" data-total="700" data-ppm2="13.00"
+    <div class="card" data-cat="good" data-pid="JuhDDTiQbc0" data-rooms="1" data-total="700" data-ppm2="13.00"
          data-area="50.0" data-first="1790357981">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuhDDTiQbc0/vynimocny-1i-apartman-v-rodinnom-dome-blizko-centra" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/3J_IUcCkv_fss?st=QzSo8-cjotzo5OL_mHhkoCQgWY4LAumVNQJ7qG06Gdk&amp;ts=1774007755&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -1276,8 +1358,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="700" data-ppm2="10.45"
+    <div class="card" data-cat="good" data-pid="Ju7BEQnBOJg" data-rooms="2" data-total="700" data-ppm2="10.45"
          data-area="67.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju7BEQnBOJg/prenajom-2-izboveho-bytu" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/4rhDKL5NO_fss?st=50lMkW_-yhwABY_R-aOGUhhca0Ii50XTUpUXUGNIlUg&amp;ts=1788771756&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge badge-warn" title="V titulku inzerátu je REZERVOVANÉ">Rezervované</span><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1292,8 +1375,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="700" data-ppm2="11.59"
+    <div class="card" data-cat="good" data-pid="Jur8oCfb2lO" data-rooms="2" data-total="700" data-ppm2="11.59"
          data-area="60.42" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Jur8oCfb2lO/prenajom-2-izbovy-byt-novostavba-sasova-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/rGu1NQYpF_fss?st=j34CoFqg2ish7sUhfBeyb-HnkwUACWB9uGN4QaHa30M&amp;ts=1776867682&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1308,8 +1392,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="700" data-ppm2="11.73"
+    <div class="card" data-cat="good" data-pid="Ju7GbEknKLQ" data-rooms="2" data-total="700" data-ppm2="11.73"
          data-area="59.7" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju7GbEknKLQ/prenajom-krasny-zariadeny-2-izbovy-byt-s-balkonom-fortnicka" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/QxgzO0Yvq_fss?st=x_sd4DRIK8ThhcjkpNaJ8KmrYpMYYY97XeEq8xMW4uo&amp;ts=1789394381&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1324,8 +1409,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="700" data-ppm2="10.94"
+    <div class="card" data-cat="unsure" data-pid="JuXP5nLwhth" data-rooms="2" data-total="700" data-ppm2="10.94"
          data-area="64.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuXP5nLwhth/prenajom-2-izbovy-byt-centrum-narodna-ul-64m2" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/pOBVRYefo_fss?st=54QE4ykr246aFcQLWPFPmuVaPGLkfJv3ZVlnA4G8PO4&amp;ts=1776068891&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie +50 €/mes.</span><span class="badge badge-info">Zariadený</span></div>
@@ -1340,8 +1426,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="700" data-ppm2="11.11"
+    <div class="card" data-cat="good" data-pid="JuOwY6WTlhp" data-rooms="2" data-total="700" data-ppm2="11.11"
          data-area="63.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuOwY6WTlhp/2-izbovy-byt-po-rekonstrukcii-na-prenajom-63-m2-29-augusta-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/H78Eybl0E_fss?st=WfhVzKbewCj0cwsf6CIDcLaoISBrCZ7OFs0-vbBKEGw&amp;ts=1789388240&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1356,8 +1443,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="700" data-ppm2="11.11"
+    <div class="card" data-cat="good" data-pid="JukpTGETFIU" data-rooms="2" data-total="700" data-ppm2="11.11"
          data-area="63.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JukpTGETFIU/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Vghzzxv99_fss?st=mttUX774IktEIdIByH6oIamXl8U5XODvR585JnCrzD0&amp;ts=1786639906&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1372,8 +1460,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="700" data-ppm2="8.97"
+    <div class="card" data-cat="good" data-pid="Ju7Z0vouRB_" data-rooms="3" data-total="700" data-ppm2="8.97"
          data-area="78.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju7Z0vouRB_/prenajom-bytu-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><div class="card-photo card-photo-placeholder">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
@@ -1388,8 +1477,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="3" data-total="700" data-ppm2="9.72"
+    <div class="card" data-cat="unsure" data-pid="JuIu45KJG_b" data-rooms="3" data-total="700" data-ppm2="9.72"
          data-area="72.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuIu45KJG_b/prenajom-3-izbovy-rekonstruovany-a-zariadeny-byt-banska-bystrica-ul-kapitana-nalepku" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/MiGlOYn2w_fss?st=98kBOyhqY1Y4UouRuXLXRAntV442GAK8ritpgEaulzE&amp;ts=1789750289&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1404,8 +1494,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="3" data-total="700" data-ppm2="10.14"
+    <div class="card" data-cat="unsure" data-pid="Juo75pBHfkF" data-rooms="3" data-total="700" data-ppm2="10.14"
          data-area="69.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Juo75pBHfkF/ponukam-na-prenajom-3-izbovy-byt-v-banskej-bystrici-cast-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/YPcRL0hnp_fss?st=bjKTJqT78fawtBwjgSZLim7SPHfnKPtZBpZFv_KlYLY&amp;ts=1789044605&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span></div>
@@ -1420,8 +1511,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="700" data-ppm2="11.67"
+    <div class="card" data-cat="good" data-pid="Ju6Zx_W6CXU" data-rooms="3" data-total="700" data-ppm2="11.67"
          data-area="60.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju6Zx_W6CXU/prenajom-cerstvo-zrekonstruovany-byt-60-m2-priamo-v-centre-banskej-bystrice-ul-lazovna" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/fo6nq1wt7_fss?st=KsT0VnIjXQnrYxyrvFDnryFJIEuY6T-i4fDHla0MZNk&amp;ts=1789384381&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span></div>
@@ -1436,8 +1528,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="3" data-total="700" data-ppm2="10.57"
+    <div class="card" data-cat="unsure" data-pid="JumD8YZhcAh" data-rooms="3" data-total="700" data-ppm2="10.57"
          data-area="66.21" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JumD8YZhcAh/3-izbovy-byt-banska-bystrica-moskovska-wwwbbrealitysk" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/HiM15d6c6_fss?st=EW-0UBjD6N3zAsbXScNKX5mMpxF0EiN-9_Dk-B7bbwU&amp;ts=1789127021&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1452,8 +1545,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="3" data-total="700" data-ppm2="10.28"
+    <div class="card" data-cat="unsure" data-pid="Julymnojq3l" data-rooms="3" data-total="700" data-ppm2="10.28"
          data-area="68.09" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Julymnojq3l/prenajom-svetly-kompletne-zariadeny-3-izbovy-byt-na-moskovskej-ulici-foncorda-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/c_74Eqsqm_fss?st=E1_4QD07TaorbbNv26wgZHxEXxajSosNr-6jCGtr69Q&amp;ts=1788890716&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1468,8 +1562,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="700" data-ppm2="8.75"
+    <div class="card" data-cat="good" data-pid="JuK2WXsRpA-" data-rooms="3" data-total="700" data-ppm2="8.75"
          data-area="80.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuK2WXsRpA-/ab-estate-na-prenajom-samostatne-izby-v-dobrej-dostupnosti-do-centra-bb" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/uIT1ZuQEN_fss?st=SiUM0REu3DK5vxsiM_9RLMV9ikB9OIKIkagb7_mYD-A&amp;ts=1770123713&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1484,8 +1579,26 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="2" data-total="720" data-ppm2="8.28"
+    <div class="card" data-cat="unsure" data-pid="JuHz-kl45Fk" data-rooms="2" data-total="700" data-ppm2="12.73"
+         data-area="55.0" data-first="1790414729">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
+      <a href="https://www.nehnutelnosti.sk/detail/JuHz-kl45Fk/prenajom-2-izbovy-byt-s-balkonom-55m2-trieda-snp" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/gySAyV3pZ_fss?st=LmUBUaPMVmGI4FKf9-yOqgb6abhmrfDEZN50mzjCQYE&amp;ts=1790407858&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
+      <div class="card-body">
+        <div class="badges"><span class="badge badge-fresh">NOVÉ</span><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
+        <a href="https://www.nehnutelnosti.sk/detail/JuHz-kl45Fk/prenajom-2-izbovy-byt-s-balkonom-55m2-trieda-snp" target="_blank" rel="noopener" class="card-title">Prenájom 2 izbový byt s balkónom (55m2), Trieda SNP</a>
+        <div class="card-price">700 € <span class="plus ok">energie v cene</span></div>
+        
+        <div class="card-meta">2-izbový · 55 m² · 12.7 €/m² · Trieda SNP 78</div>
+        <div class="card-footer">
+          <span class="source-tag"><a href="https://www.nehnutelnosti.sk/detail/JuHz-kl45Fk/prenajom-2-izbovy-byt-s-balkonom-55m2-trieda-snp" target="_blank" rel="noopener">nehnutelnosti.sk</a></span>
+          <span class="dates">od 2026-09-26 · naposledy 2026-09-26</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-cat="unsure" data-pid="Ju1d52jDfHs" data-rooms="2" data-total="720" data-ppm2="8.28"
          data-area="87.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju1d52jDfHs/2-izbovy-byt-v-rodinnom-dome-so-samostatnym-vchodom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/smqX5P4bI_fss?st=nFVDkiJIbb_C8RJUnDTR0O1uJYwCyRf0Ve-LrXOGelA&amp;ts=1789543356&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie v cene</span></div>
@@ -1500,8 +1613,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="720" data-ppm2="13.33"
+    <div class="card" data-cat="good" data-pid="Jua1bN5nNLC" data-rooms="2" data-total="720" data-ppm2="13.33"
          data-area="54.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Jua1bN5nNLC/deltaproperty-2izb-byt-s-park-miestom-sirsie-centrum-mesta-banska-bystrica-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/D0sbJ6vHr_fss?st=-DvP7-RPlcG-Ltu_wqGr0uB9wU_RIsCheS-d-Ufu0G4&amp;ts=1788339868&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -1516,8 +1630,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="720" data-ppm2="12.00"
+    <div class="card" data-cat="good" data-pid="JuyAY4VzzvD" data-rooms="2" data-total="720" data-ppm2="12.00"
          data-area="60.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuyAY4VzzvD/moderny-2i-byt-v-centre-mesta" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/jwvGhOdyUg_fss?st=FpdfJs-9m4F-WVe0Fb4axomFOg_aHd0oWA4eUV8PFY0&amp;ts=1790165187&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1532,8 +1647,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="720" data-ppm2="10.00"
+    <div class="card" data-cat="good" data-pid="JuAvBeFPraw" data-rooms="3" data-total="720" data-ppm2="10.00"
          data-area="72.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuAvBeFPraw/kompletne-zariadeny-3-izbovy-byt-na-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/k1zk8oKAG_fss?st=zu1eKeEErpYvGADqwkOOwxm_Et7OYp3pC5EIelDj94Q&amp;ts=1789500667&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1548,8 +1664,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="720" data-ppm2="9.02"
+    <div class="card" data-cat="good" data-pid="JuORw-m4Apf" data-rooms="3" data-total="720" data-ppm2="9.02"
          data-area="79.8" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuORw-m4Apf/prenajom-nadherny-velky-3-izbovy-byt-s-loggiou-sasova" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/i46Qu6-v__fss?st=epsv9DrA-_O_lRo2qLkeRY6rEWQdyrTNWevp_-uY0KY&amp;ts=1787051652&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1564,8 +1681,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="720" data-ppm2="10.00"
+    <div class="card" data-cat="good" data-pid="JuDaURPwzSS" data-rooms="3" data-total="720" data-ppm2="10.00"
          data-area="72.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuDaURPwzSS/zrekonstruovany-3i-byt-v-sasovej" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/cugfdiwcf_fss?st=MPQZnciLO8tm6-JoHUO8uYiYctM3wrL3kA_2MlO9kOQ&amp;ts=1790275665&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1580,8 +1698,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="730" data-ppm2="14.60"
+    <div class="card" data-cat="good" data-pid="JuHlJE0lDQj" data-rooms="2" data-total="730" data-ppm2="14.60"
          data-area="50.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuHlJE0lDQj/novostavba-nadstandardny-2-izb-byt-s-parkovacim-miestom-banska-bystrica-ulanka-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/wUh8fFoGZ_fss?st=uhcSnhk0nGYfv-wqoe5rhc63Ds75j-vxB4pUeoWdvA0&amp;ts=1755010420&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie +50 €/mes.</span><span class="badge badge-info">Zariadený</span></div>
@@ -1596,8 +1715,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="750" data-ppm2="8.33"
+    <div class="card" data-cat="good" data-pid="Juj2tN4t8K7" data-rooms="3" data-total="750" data-ppm2="8.33"
          data-area="66.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Juj2tN4t8K7/na-prenajom-priestranny-3-izbovy-byt-pri-kyjevskom-namesti-ihned-volny" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/2vpTaY_1T_fss?st=EkSMn1fCOONwy7Ql41Oyjja3QSsNwGGV4FyzGlarAYA&amp;ts=1788377738&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge badge-warn" title="V titulku inzerátu je REZERVOVANÉ">Rezervované</span><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1612,8 +1732,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="750" data-ppm2="12.10"
+    <div class="card" data-cat="good" data-pid="JuehJZ5ndhW" data-rooms="2" data-total="750" data-ppm2="12.10"
          data-area="62.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuehJZ5ndhW/prenajom-2-izbovy-byt-v-centre-mesta-pri-europa-sc" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/-5U81BFx5_fss?st=F2KfsEzHIqo87bYnBfeOkffe-0ltw1x3g3I-wnKI3mc&amp;ts=1763146626&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-info">Zariadený</span></div>
@@ -1628,8 +1749,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="750" data-ppm2="12.10"
+    <div class="card" data-cat="good" data-pid="JuG3vQibg6K" data-rooms="2" data-total="750" data-ppm2="12.10"
          data-area="62.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuG3vQibg6K/prenajom-2-izbovy-byt-v-centre-bb" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/fPTgCrZ_2_fss?st=XmjH_cwat0jnUYMRvDlhPufgebfCL_Qh1kKhB0B_2No&amp;ts=1789400254&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1644,8 +1766,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="750" data-ppm2="16.67"
+    <div class="card" data-cat="good" data-pid="JuabODDRtbe" data-rooms="2" data-total="750" data-ppm2="16.67"
          data-area="45.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuabODDRtbe/na-prenajom-slnecny-2izbovy-byt-v-banskej-bystrici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/ZWBbnRCCO_fss?st=mWt_-zMY1KwmxKXKpujK6lo2S5pQoUP0S40Zmdp4u-8&amp;ts=1788951524&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -1660,8 +1783,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="750" data-ppm2="13.64"
+    <div class="card" data-cat="good" data-pid="JumnCrMV-Z0" data-rooms="2" data-total="750" data-ppm2="13.64"
          data-area="55.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JumnCrMV-Z0/prenajom-kompletne-zrekonstruovany-zariadeny-2-izbovy-byt-uhlisko-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/iG1dbyB_J_fss?st=RQmuqPamVl_E6BDdkRU3EXQL1kT_vYn3KK7JP22uSVg&amp;ts=1784722811&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1676,8 +1800,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="750" data-ppm2="9.74"
+    <div class="card" data-cat="good" data-pid="Ju0WE9G7_0e" data-rooms="3" data-total="750" data-ppm2="9.74"
          data-area="77.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju0WE9G7_0e/lokalita-sidlisko-prenajom-3-izb-bytu-77-m2-v-novostavbe-s-balkonom-pivnicou-a-vonkajsim-parkovacim-miestom-13-m2" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/TcvabO9eT_fss?st=KXwY-6-qKifDxj6wTj15RZHy7Je7GpCPDIvIXxsuRME&amp;ts=1789152698&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -1692,8 +1817,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="750" data-ppm2="10.88"
+    <div class="card" data-cat="good" data-pid="JuWjanwETQp" data-rooms="3" data-total="750" data-ppm2="10.88"
          data-area="68.95" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuWjanwETQp/prenajom-slnecny-3-izbovy-byt-s-balkonom-a-parkovanim-centrum" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/wmJJjqrDM_fss?st=x2WNB9QF4JZp7aT_IoRTB6f1RIpAhFPl-9jUXWK7fy0&amp;ts=1787051650&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge badge-info" title="Rovnaký byt (izby, plocha, cena, titulok) inzerovaný pod viacerými ID - zlúčené">možný duplikát</span><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -1708,8 +1834,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="750" data-ppm2="9.74"
+    <div class="card" data-cat="good" data-pid="JuMmcVTMepS" data-rooms="3" data-total="750" data-ppm2="9.74"
          data-area="77.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuMmcVTMepS/sidlisko-snp-3i-byt-tehlovy-rekonstrukcia-77-m2" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/WMrqRme51_fss?st=9s9o6Wg0zS34DUsvo_gPrRGVGyG7nomlwHWuB62Ilwk&amp;ts=1789495280&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Nezariadený</span></div>
@@ -1724,8 +1851,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="3" data-total="750" data-ppm2="10.32"
+    <div class="card" data-cat="unsure" data-pid="JuFtfYwBRhz" data-rooms="3" data-total="750" data-ppm2="10.32"
          data-area="72.64" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuFtfYwBRhz/na-prenajom-priestranny-3-izbovy-byt-s-balkonom-banska-bystricasasova" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/oU5He-UBY_fss?st=I3owR9_6-Hw07eaSzq0rCtM73hPffN3E7wB9kPQwNLE&amp;ts=1789749850&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1740,8 +1868,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="750" data-ppm2="10.74"
+    <div class="card" data-cat="good" data-pid="JunHTP6hsvs" data-rooms="3" data-total="750" data-ppm2="10.74"
          data-area="69.8" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JunHTP6hsvs/3-izbovy-byt-na-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/cA4edI3Va_fss?st=QSGDZ8eJkes3MVcTTVLqutVynODvkX-p4bc4yKeLg-s&amp;ts=1789129490&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge badge-warn" title="V titulku inzerátu je REZERVOVANÉ">Rezervované</span><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1756,8 +1885,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="3" data-total="750" data-ppm2="10.42"
+    <div class="card" data-cat="unsure" data-pid="Juwaf-VbqtC" data-rooms="3" data-total="750" data-ppm2="10.42"
          data-area="72.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Juwaf-VbqtC/newcastleprenajom-3-izbovy-byt-72m2-logia" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/UGBkPRnzH_fss?st=T4HWWxPD5-BivluXkfOjIiIMPQthLN5lRoH6dlgm0LU&amp;ts=1785922113&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge badge-warn" title="V titulku inzerátu je REZERVOVANÉ">Rezervované</span><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1772,8 +1902,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="750" data-ppm2="11.54"
+    <div class="card" data-cat="good" data-pid="Judl_mZJtag" data-rooms="3" data-total="750" data-ppm2="11.54"
          data-area="65.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Judl_mZJtag/na-prenajom-3-izbovy-byt-blizko-centra-mesta-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/mMHF0nU_Mh_fss?st=GCSW64Z9xf0oRkQW3YMTyNDGTYyZwg_8VS4f0h7iz64&amp;ts=1790151506&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1788,8 +1919,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="760" data-ppm2="10.13"
+    <div class="card" data-cat="good" data-pid="JuvHYUUH2d0" data-rooms="2" data-total="760" data-ppm2="10.13"
          data-area="75.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuvHYUUH2d0/2-izbovy-byt-banska-bystrica-tr-snp-75-m2-wwwbbrealitysk" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/bkbOF9tt7_fss?st=VnqaRV6ld9F4t4vK9KflvX-k2mjORADrd27jLNxfg-4&amp;ts=1788957951&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1804,8 +1936,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="760" data-ppm2="11.95"
+    <div class="card" data-cat="good" data-pid="Juo1nwWBUoc" data-rooms="2" data-total="760" data-ppm2="11.95"
          data-area="63.59" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Juo1nwWBUoc/prenajom-2-izbovy-byt-v-banskej-bystrici-ul-bernolakova" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/h_Sc-u_xa_fss?st=PIeVV3jVHQd71jBy52t1WoXyXh1WiiUj6MP9Xikx5CY&amp;ts=1784923649&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1820,8 +1953,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="760" data-ppm2="8.79"
+    <div class="card" data-cat="good" data-pid="JuJK76F-EPN" data-rooms="3" data-total="760" data-ppm2="8.79"
          data-area="86.45" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuJK76F-EPN/prenajom-krasny-velky-3-izbovy-byt-s-balkonom-foncorda" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/xOjr2u4cn_fss?st=4N5yl2sqVLTvzPXF_pPbXbJCxvZT0EPduSPqpjkMTvE&amp;ts=1789548674&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1836,8 +1970,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="770" data-ppm2="11.00"
+    <div class="card" data-cat="good" data-pid="JuZhtxc2Nso" data-rooms="3" data-total="770" data-ppm2="11.00"
          data-area="70.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuZhtxc2Nso/ab-estate-kompletne-zariadeny-3-izbovy-byt-v-sasovej-na-prenajom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/WktcmSZ0e_fss?st=wnDA65uJghOsQhV2jNVtsy-xCTFWJA9qqFBhM1rt8cA&amp;ts=1790020741&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1852,8 +1987,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="770" data-ppm2="10.55"
+    <div class="card" data-cat="good" data-pid="JulbCp-knmW" data-rooms="3" data-total="770" data-ppm2="10.55"
          data-area="73.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JulbCp-knmW/prenajom-novozrekonstruovaneho-3-izboveho-bytu" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/l0dg5j4EJ_fss?st=MWS789ejuspdfsp_SxW09HhftUo3ZlX7aX5Mpf3n6ys&amp;ts=1786353535&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Nezariadený</span></div>
@@ -1868,8 +2004,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="780" data-ppm2="15.60"
+    <div class="card" data-cat="good" data-pid="JudkxFUxbxp" data-rooms="2" data-total="780" data-ppm2="15.60"
          data-area="50.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JudkxFUxbxp/na-prenajom-2-izbovy-byt-v-novostavbe-v-mestskej-casti-ulanka" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/3fEtCQZvX_fss?st=0iz46elStMR61_br7nnZM9jHA-9SDiWAusVHqsEqAUY&amp;ts=1788624159&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-info">Zariadený</span></div>
@@ -1884,8 +2021,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="780" data-ppm2="15.00"
+    <div class="card" data-cat="good" data-pid="Ju65WfApyLj" data-rooms="2" data-total="780" data-ppm2="15.00"
          data-area="52.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju65WfApyLj/hd-reality-prenajom-novostavba-moderny-2-izbovy-byt-v-sukromnej-bytovke-ulanka-5-minut-od-centra" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/s5ZDXMp25_fss?st=3E3T5PBGA8GfmvHoT2I67GKeDhAkthcwGmsWkxX2-nY&amp;ts=1788552581&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span></div>
@@ -1900,8 +2038,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="780" data-ppm2="15.60"
+    <div class="card" data-cat="good" data-pid="Ju2TdN5nhjV" data-rooms="2" data-total="780" data-ppm2="15.60"
          data-area="50.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju2TdN5nhjV/prenajom-2-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/yNJKslH2F_fss?st=zCgN-V6p3Rh44JmB4Se5Qojyx4rH8w_FIibAuDjrciI&amp;ts=1789412024&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -1916,8 +2055,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="780" data-ppm2="10.54"
+    <div class="card" data-cat="good" data-pid="JuB4c9xllbV" data-rooms="3" data-total="780" data-ppm2="10.54"
          data-area="74.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuB4c9xllbV/prenajom-priestranneho-3-izboveho-bytu-s-balkonom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Gsy5YmFYK_fss?st=0A7lxe_MgSzDtYglBnctovMZoqlZgtLC03jFbhKMQcE&amp;ts=1788257416&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1932,8 +2072,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="old" data-rooms="3" data-total="780" data-ppm2="10.54"
+    <div class="card" data-cat="old" data-pid="Ju4U9LIVIRL" data-rooms="3" data-total="780" data-ppm2="10.54"
          data-area="74.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Ju4U9LIVIRL/3-izbovy-byt-s-balkonom-na-prenajom-v-banskej-bystrici-sasovej-tatranska-ulica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/_ozLzo16S_fss?st=T19GE13G6m3eazC_vNEzU39txImpHujmxWfm8nHd2Gs&amp;ts=1788461262&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-old" title="štruktúrované pole portálu">Pôvodný stav</span><span class="badge badge-info">Zariadený</span></div>
@@ -1948,8 +2089,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="780" data-ppm2="10.54"
+    <div class="card" data-cat="good" data-pid="JurkqAa4j3Q" data-rooms="3" data-total="780" data-ppm2="10.54"
          data-area="74.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JurkqAa4j3Q/prenajom-3-izboveho-bytu-s-balkonom" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/P6QLQQejX_fss?st=eYDozODsLwjfD9wjFOsvLf4xGBCRPlj_E9aiipEVQiI&amp;ts=1789662004&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1964,8 +2106,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="3" data-total="780" data-ppm2="11.18"
+    <div class="card" data-cat="unsure" data-pid="JuGpeV5w3Kh" data-rooms="3" data-total="780" data-ppm2="11.18"
          data-area="69.76" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuGpeV5w3Kh/na-prenajom-3-izbovy-byt-na-starohorskej-ulici" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/EImSQYPgv_fss?st=Pe_NOg3Lg7Abe-m6Q7DnL_JvO2wEzcivYxJSlNZIilo&amp;ts=1789660333&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -1980,8 +2123,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="800" data-ppm2="17.95"
+    <div class="card" data-cat="good" data-pid="JuuVZNxEypV" data-rooms="2" data-total="800" data-ppm2="17.95"
          data-area="44.56" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuuVZNxEypV/rezervovane-2-izbovy-byt-na-prenajom-belveder-s-garazovym-statim" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL3JzZg==/a34DbXSa5_fss?st=PAj-fPGV1xMuZS-fPj9M74fOLRJl5z2-EjoQw_fPDzc&amp;ts=1721381694&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -1996,8 +2140,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="800" data-ppm2="0.00"
+    <div class="card" data-cat="good" data-pid="JuhZDXes2bX" data-rooms="3" data-total="800" data-ppm2="0.00"
          data-area="0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuhZDXes2bX/dlhodoby-najom-trojizbovy-byt-tulska" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Qit1iDatA_fss?st=iGdJgpTOmAHmRjWQU40kmEgHShyaiUXLBsQWQpOSykU&amp;ts=1790239851&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -2012,8 +2157,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="unsure" data-rooms="3" data-total="800" data-ppm2="12.50"
+    <div class="card" data-cat="unsure" data-pid="JuvJylHq1d-" data-rooms="3" data-total="800" data-ppm2="12.50"
          data-area="64.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuvJylHq1d-/pripravujeme-na-prenajom-od-122026-exkluzivne-3-izbovy-byt-na-foncorde" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/xSjGyEF4f_fss?st=dbrDT8IlbKHqewXltXqOh7l0G10EcsRXDkLfkRxDIZc&amp;ts=1763931008&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-partial" title="štruktúrované pole portálu">Čiastočná rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span><span class="badge badge-info">Panelák</span></div>
@@ -2028,8 +2174,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="800" data-ppm2="9.88"
+    <div class="card" data-cat="good" data-pid="JueYA4hjYAA" data-rooms="3" data-total="800" data-ppm2="9.88"
          data-area="81.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JueYA4hjYAA/na-prenajom-nadstandardne-zariadeny-byt-s-dvoma-garazovymi-statiami-v-novostavbe-na-prsianskej-terase" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/Y978zCugF_fss?st=XeG7U2YbHeS0fstr7CVM2Y67kK1YbkS3QkGkSbFjeu0&amp;ts=1770813928&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -2044,8 +2191,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="800" data-ppm2="11.59"
+    <div class="card" data-cat="good" data-pid="JuAzeSrgA_e" data-rooms="3" data-total="800" data-ppm2="11.59"
          data-area="69.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuAzeSrgA_e/3-izbovy-byt-po-kompletnej-rekonstrukcii-na-prenajom-tulska-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/TaBbkoHId_fss?st=E-RcXruVmeusR-UJj0ebud3cNWFPIg5yN3V5IbtVTYM&amp;ts=1788356930&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge badge-warn" title="V titulku inzerátu je REZERVOVANÉ">Rezervované</span><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -2060,8 +2208,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="800" data-ppm2="11.35"
+    <div class="card" data-cat="good" data-pid="JudTAUdO-kn" data-rooms="3" data-total="800" data-ppm2="11.35"
          data-area="70.5" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JudTAUdO-kn/prenajom-troj-izbovy-byt-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/2Uf0fJ_9L_fss?st=rZpZfFch8QYhtwKMcxdakZVOT1lYiaZib454syjCMRw&amp;ts=1784289782&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-parking">Parkovanie (zmienka)</span><span class="badge badge-info">Zariadený</span></div>
@@ -2076,8 +2225,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="850" data-ppm2="12.50"
+    <div class="card" data-cat="good" data-pid="JuOsmCsCuql" data-rooms="2" data-total="850" data-ppm2="12.50"
          data-area="60.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuOsmCsCuql/prenajom-2-izb-byt-novostavba-centrum" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/vXy3Pinwr_fss?st=c21VMoLoorrQZxor7WKpu9waPbdbfYVfGg86u15iAyE&amp;ts=1755330887&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie +50 €/mes.</span><span class="badge badge-info">Zariadený</span></div>
@@ -2092,8 +2242,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="2" data-total="980" data-ppm2="13.79"
+    <div class="card" data-cat="good" data-pid="JuvathsD90K" data-rooms="2" data-total="980" data-ppm2="13.79"
          data-area="58.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/JuvathsD90K/prenajom-moderneho-2-izboveho-bytu-v-novostavbe-lazovna-ulica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/1bvecB7kJ_fss?st=RUqjwD1dXJ0iVXQMMVZEd5rspK-vfQDI83uwK57xp98&amp;ts=1789891299&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-new" title="štruktúrované pole portálu">Novostavba</span><span class="badge badge-parking">Parkovanie v cene</span><span class="badge badge-info">Zariadený</span></div>
@@ -2108,8 +2259,9 @@
       </div>
     </div>
 
-    <div class="card" data-cat="good" data-rooms="3" data-total="1000" data-ppm2="4.04"
+    <div class="card" data-cat="good" data-pid="Jute1F91lPR" data-rooms="3" data-total="1000" data-ppm2="4.04"
          data-area="198.0" data-first="1790353801">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="https://www.nehnutelnosti.sk/detail/Jute1F91lPR/prenajom-3izboveho-mezonetoveho-bytu-na-pesej-zone-lazovna-ulica-banska-bystrica" target="_blank" rel="noopener" class="card-photo-link"><img class="card-photo" src="https://img.unitedclassifieds.sk/foto/Zml0LWluLzgwMHgyMDAwL2ZpbHRlcnM6cXVhbGl0eSg4MCk6Zm9ybWF0KHdlYnApL2p1bA==/oTTEvYmsL_fss?st=cL60WULklmiRNoZJfIuCMpkP3XNlv7MMQAbtTG5aE2s&amp;ts=1744283194&amp;e=0" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="card-photo card-photo-placeholder" style="display:none;">Bez fotky</div></a>
       <div class="card-body">
         <div class="badges"><span class="badge cond-renovated" title="štruktúrované pole portálu">Rekonštrukcia</span><span class="badge badge-info">Zariadený</span></div>
@@ -2136,7 +2288,24 @@
   const sortState = { field: 'total', asc: true };
   const DEFAULT_ASC = { total: true, ppm2: true, area: false, first: false };
 
-  const catOk = (c, f) => f === 'all' || c.dataset.cat === f;
+  // Obľúbené: ukladajú sa len v tomto prehliadači (localStorage), kľúčom je ID inzerátu.
+  const FAV_KEY = 'rental-bb-favs';
+  let favs = new Set();
+  try { favs = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]')); } catch (e) {}
+  const saveFavs = () => { try { localStorage.setItem(FAV_KEY, JSON.stringify([...favs])); } catch (e) {} };
+  const isFav = c => favs.has(c.dataset.pid);
+  function paintFavs() {
+    cards.forEach(c => {
+      const on = isFav(c), b = c.querySelector('.fav-btn');
+      b.textContent = on ? '★' : '☆';
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.title = on ? 'Odstrániť z obľúbených' : 'Pridať do obľúbených';
+      c.classList.toggle('is-fav', on);
+    });
+  }
+
+  const catOk = (c, f) => f === 'fav' ? isFav(c) : (f === 'all' || c.dataset.cat === f);
   const roomsOk = (c, r) => r === 'all' || c.dataset.rooms === r;
 
   function updateCounts() {
@@ -2166,6 +2335,8 @@
     const value = c => parseFloat(c.dataset[sortState.field]) || 0;
     // Karty bez údaja (0) idú na koniec pri vzostupnom radení.
     cards.slice().sort((a, b) => {
+      const fa = isFav(a), fb = isFav(b);
+      if (fa !== fb) return fa ? -1 : 1;          // obľúbené vždy na začiatku
       const va = value(a), vb = value(b);
       if (sortState.asc && (va === 0 || vb === 0) && va !== vb) return va === 0 ? 1 : -1;
       return sortState.asc ? va - vb : vb - va;
@@ -2187,6 +2358,14 @@
     applyFilter();
   }));
 
+  grid.addEventListener('click', e => {
+    const b = e.target.closest('.fav-btn');
+    if (!b) return;
+    const c = b.closest('.card');
+    if (favs.has(c.dataset.pid)) favs.delete(c.dataset.pid); else favs.add(c.dataset.pid);
+    saveFavs(); paintFavs(); applySort(); applyFilter();
+  });
+
   document.querySelectorAll('.room-btn').forEach(btn => btn.addEventListener('click', () => {
     document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -2200,7 +2379,7 @@
     updateSortLabels(); applySort();
   }));
 
-  updateSortLabels(); applySort(); applyFilter();
+  paintFavs(); updateSortLabels(); applySort(); applyFilter();
 </script>
 </body>
 </html>
