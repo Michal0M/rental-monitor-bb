@@ -120,3 +120,11 @@ musí zodpovedať deklarovanému počtu z portálu). Pri chybe sa nič neoznač�
   titulkom sa nezlúči - radšej duplicita než zlúčenie dvoch rôznych bytov.
 - Odznak NOVÉ sa v prvý (seed) deň nezobrazuje - vtedy je "nové" všetko.
 - Testovacie fixtures sú skrátené karty z reálnych výpisov, nie celé stránky.
+
+## Discord oznámenia
+
+- Webhook kanála sa berie **len** z GitHub Secretu `DISCORD_WEBHOOK_BYTY` (nikdy nie z kódu ani z chatu).
+- Oznamuje sa: nový inzerát, zmena ceny (zľava/zvýšenie), opätovne objavený inzerát. Iba pre stavy z `config.NOTIFY_CONDITIONS` (pôvodný stav a rezervované sa neoznamujú).
+- Prvý beh pre daný zdroj (prázdna DB) je tichý, aby neprišla stena správ. Max `NOTIFY_MAX_PER_RUN` oznámení za beh.
+- Chyba Discordu scraper nezhodí (len riadok `[notify]` v logu).
+- Test: Actions → Run workflow → zaškrtnúť „Poslať testovaciu správu na Discord“.

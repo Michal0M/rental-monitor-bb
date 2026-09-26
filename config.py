@@ -60,3 +60,8 @@ NEW_BADGE_DAYS = 3               # "NOVÉ" badge pre inzeráty videné prvýkrá
 
 DB_PATH = "data/listings.db"
 OUTPUT_HTML_PATH = "docs/index.html"
+
+# --- Discord oznámenia (webhook v GitHub Secret DISCORD_WEBHOOK_BYTY) ---
+# Pre aké stavy sa posiela oznámenie ("old" = pôvodný stav sa neoznamuje).
+NOTIFY_CONDITIONS = ("new", "renovated", "partial", "unknown")
+NOTIFY_MAX_PER_RUN = 15  # ochrana pred zaplavením kanála

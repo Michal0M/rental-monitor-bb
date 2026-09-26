@@ -4,7 +4,12 @@ on:
   schedule:
     # 5:30 UTC = 7:30 (leto) / 6:30 (zima) v Bratislave. Formát cron: minúta hodina * * *
     - cron: "30 5 * * *"
-  workflow_dispatch: {}  # ručné spustenie z GitHub UI (tab "Actions")
+  workflow_dispatch:  # ručné spustenie z GitHub UI (tab "Actions")
+    inputs:
+      discord_test:
+        description: "Poslať testovaciu správu na Discord"
+        type: boolean
+        default: false
 
 permissions:
   contents: write  # potrebné, aby workflow mohol commitnúť späť DB a HTML
@@ -34,7 +39,15 @@ jobs:
 
       - name: Spustiť scraper
         # Exit kód 1 = zlyhali VŠETKY zdroje (workflow sa označí červeno a pošle upozornenie).
+        env:
+          DISCORD_WEBHOOK_BYTY: ${{ secrets.DISCORD_WEBHOOK_BYTY }}
         run: python scraper.py
+
+      - name: Poslať testovaciu správu na Discord (len pri ručnom spustení s voľbou)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.discord_test }}
+        env:
+          DISCORD_WEBHOOK_BYTY: ${{ secrets.DISCORD_WEBHOOK_BYTY }}
+        run: python notify.py
 
       - name: Vygenerovať HTML stránku
         run: python render.py

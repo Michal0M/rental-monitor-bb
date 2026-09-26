@@ -16,6 +16,7 @@ import sys
 import config
 import db
 import nehnutelnosti_scraper
+import notify
 import reality_scraper
 import textutils
 from http_util import SourceError
@@ -113,8 +114,8 @@ def apply_detail(conn, module, raw: dict, budget: dict) -> None:
     raw["detail_version"] = config.DETAIL_VERSION
 
 
-def process_source(module, conn) -> tuple[str, dict]:
-    """Spracuje jeden zdroj. Vracia (status, štatistiky)."""
+def process_source(module, conn, pending: list | None = None) -> tuple[str, dict]:
+    """Spracuje jeden zdroj. Vracia (status, štatistiky). Oznámenia sa pridávajú do `pending`."""
     name = module.SOURCE_NAME
     print(f"\n=== Zdroj: {module.LABEL} ===")
     try:
@@ -127,6 +128,8 @@ def process_source(module, conn) -> tuple[str, dict]:
     stats = {"new": 0, "price_changed": 0, "unchanged": 0, "reappeared": 0, "rejected": 0, "removed": 0}
     budget = {"used": 0, "skipped": 0, "failed": 0, "stopped": False}
     seen = set()
+    # prvý beh (prázdna DB pre tento zdroj) = seed: neoznamuje sa nič, inak by prišla stena správ
+    seeding = conn.execute("SELECT COUNT(*) FROM listings WHERE source = ?", (name,)).fetchone()[0] == 0
     for raw in candidates:
         seen.add(raw["portal_id"])
         reason = rejection_reason(raw)
@@ -137,7 +140,12 @@ def process_source(module, conn) -> tuple[str, dict]:
             continue
         apply_detail(conn, module, raw, budget)
         listing = enrich(raw)
+        prev = db.get_listing(conn, db.make_id(name, raw["portal_id"]))
         result = db.upsert_listing(conn, listing)
+        if pending is not None and not seeding and notify.should_notify(listing):
+            kind = notify.kind_for(result, prev["price"] if prev else None, listing["price"])
+            if kind:
+                pending.append({"kind": kind, "listing": listing, "old_price": prev["price"] if prev else None})
         stats[result] += 1
         if result != "unchanged":
             print(f"[{name}] {result.upper()}: {listing['title'][:60]} | {listing['rooms']}i {listing['area_m2']} m² "
@@ -157,11 +165,16 @@ def process_source(module, conn) -> tuple[str, dict]:
 def main() -> int:
     db.init_db(config.DB_PATH)
     results = []
+    pending: list = []
     with db.connect(config.DB_PATH) as conn:
         for module in SOURCES:
-            status, _ = process_source(module, conn)
+            status, _ = process_source(module, conn, pending)
             results.append((module, status))
             conn.commit()  # výsledok zdroja sa uloží hneď, aj keď ďalší zdroj spadne
+    try:
+        notify.send_notifications(pending)
+    except Exception as e:  # oznámenia nesmú zhodiť scraper
+        print(f"[notify] neočakávaná chyba: {type(e).__name__}")
     failed = [(m, s) for m, s in results if s != "ok"]
     if failed and len(failed) == len(results):
         print("\nVŠETKY zdroje zlyhali - ukončujem s chybou (viď logy vyššie).")
