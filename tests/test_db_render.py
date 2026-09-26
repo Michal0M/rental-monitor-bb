@@ -232,8 +232,16 @@ class RenderTests(unittest.TestCase):
         page = render.render(self.path, self.out)
         for r in (1, 2, 3):
             self.assertIn(f'data-rooms="{r}" data-label="{r}-izbové">{r}-izbové (1)', page)
-            self.assertIn(f'class="card" data-cat="good" data-rooms="{r}"', page)
+            self.assertIn(f'data-rooms="{r}" data-total', page)
         self.assertIn("Všetky izby (3)", page)
+
+    def test_favorite_button_and_tab(self):
+        with db.connect(self.path) as conn:
+            db.upsert_listing(conn, sample(portal_id="JuFav1", title="A"))
+        page = render.render(self.path, self.out)
+        self.assertIn('data-pid="JuFav1"', page)
+        self.assertIn('class="fav-btn"', page)
+        self.assertIn('data-filter="fav"', page)
 
     def test_html_is_escaped(self):
         with db.connect(self.path) as conn:

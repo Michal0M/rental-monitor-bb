@@ -65,6 +65,10 @@ alebo "Garážové parkovacie miesto 50 €" sa vyhodnocujú z neho. Karta uká�
 a odznak `Parkovanie +50 €/mes.` (cena parkovania sa do "celkom" nepočíta). Zmena parsera detailu = zvýš
 `DETAIL_VERSION` v `config.py`, všetky detaily sa jednorazovo stiahnu znova.
 
+**Obľúbené:** hviezdička ☆/★ na karte. Obľúbené karty sú vždy na začiatku (v rámci zvolenej záložky, izieb aj radenia)
+a záložka *★ Obľúbené* ukáže len ich. Ukladajú sa **iba v prehliadači** (localStorage, kľúč = ID inzerátu), takže sú
+zvlášť na PC a v mobile a po vymazaní údajov prehliadača zmiznú. Stránka je statická, žiadny server nemá.
+
 **Ďalšie filtre:** `PRENAJATÉ` v titulku = vyradené; `REZERVOVANÉ` = zostane so žltým odznakom; "1,5i byt"
 sa nepočíta za 2-izbový; minimálna plocha `MIN_AREA_M2` (2-izb. 35 m², 3-izb. 50 m²; inzerát bez plochy sa nevyradí).
 

@@ -192,8 +192,9 @@ def card_html(card: dict, history: list[dict], seed_day: str | None = None) -> s
         meta_parts.append(f'{esc(card["floor"])}. poschodie')
 
     return f"""
-    <div class="card" data-cat="{cat}" data-rooms="{card['rooms'] or 0}" data-total="{total or 0:.0f}" data-ppm2="{per_m2 or 0:.2f}"
+    <div class="card" data-cat="{cat}" data-pid="{esc(card['portal_id'])}" data-rooms="{card['rooms'] or 0}" data-total="{total or 0:.0f}" data-ppm2="{per_m2 or 0:.2f}"
          data-area="{card['area_m2'] or 0}" data-first="{int(first.timestamp())}">
+      <button type="button" class="fav-btn" title="Pridať do obľúbených" aria-label="Pridať do obľúbených" aria-pressed="false">☆</button>
       <a href="{esc(primary_url)}" target="_blank" rel="noopener" class="card-photo-link">{photo_html}</a>
       <div class="card-body">
         <div class="badges">{''.join(badges)}</div>
@@ -254,7 +255,13 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
   .controls button.room-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
   .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:14px; }
   .card { background:var(--card-bg); border:1px solid var(--border); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; }
+  .card { position:relative; }
   .card[data-cat="removed"] { opacity:.5; }
+  .fav-btn { position:absolute; top:8px; right:8px; z-index:2; width:34px; height:34px; border-radius:50%; border:none; cursor:pointer;
+             background:rgba(15,17,21,.7); color:#fff; font-size:20px; line-height:34px; padding:0; }
+  .fav-btn:hover { background:rgba(15,17,21,.9); }
+  .fav-btn.on { color:var(--yellow); }
+  .card.is-fav { border-color:var(--yellow); }
   .card-photo-link { display:block; }
   .card-photo { width:100%; height:170px; object-fit:cover; background:#000; display:block; }
   .card-photo-placeholder { align-items:center; justify-content:center; color:var(--text-dim); font-size:12px; background:#15171c; display:flex; }
@@ -288,6 +295,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
   <div class="subtitle">Aktualizované: %%UPDATED%% · rozsah %%PRICE_MIN%%–%%PRICE_MAX%% € · %%ROOMS%%-izbové</div>
   %%RUN_STATUS%%
   <div class="controls">
+    <button class="filter-btn" data-filter="fav" data-label="★ Obľúbené">★ Obľúbené (0)</button>
     <button class="filter-btn active" data-filter="good" data-label="Novostavba / rekonštrukcia">Novostavba / rekonštrukcia (%%N_GOOD%%)</button>
     <button class="filter-btn" data-filter="unsure" data-label="Neistý stav">Neistý stav (%%N_UNSURE%%)</button>
     <button class="filter-btn" data-filter="old" data-label="Pôvodný stav">Pôvodný stav (%%N_OLD%%)</button>
@@ -320,7 +328,24 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
   const sortState = { field: 'total', asc: true };
   const DEFAULT_ASC = { total: true, ppm2: true, area: false, first: false };
 
-  const catOk = (c, f) => f === 'all' || c.dataset.cat === f;
+  // Obľúbené: ukladajú sa len v tomto prehliadači (localStorage), kľúčom je ID inzerátu.
+  const FAV_KEY = 'rental-bb-favs';
+  let favs = new Set();
+  try { favs = new Set(JSON.parse(localStorage.getItem(FAV_KEY) || '[]')); } catch (e) {}
+  const saveFavs = () => { try { localStorage.setItem(FAV_KEY, JSON.stringify([...favs])); } catch (e) {} };
+  const isFav = c => favs.has(c.dataset.pid);
+  function paintFavs() {
+    cards.forEach(c => {
+      const on = isFav(c), b = c.querySelector('.fav-btn');
+      b.textContent = on ? '★' : '☆';
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.title = on ? 'Odstrániť z obľúbených' : 'Pridať do obľúbených';
+      c.classList.toggle('is-fav', on);
+    });
+  }
+
+  const catOk = (c, f) => f === 'fav' ? isFav(c) : (f === 'all' || c.dataset.cat === f);
   const roomsOk = (c, r) => r === 'all' || c.dataset.rooms === r;
 
   function updateCounts() {
@@ -350,6 +375,8 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
     const value = c => parseFloat(c.dataset[sortState.field]) || 0;
     // Karty bez údaja (0) idú na koniec pri vzostupnom radení.
     cards.slice().sort((a, b) => {
+      const fa = isFav(a), fb = isFav(b);
+      if (fa !== fb) return fa ? -1 : 1;          // obľúbené vždy na začiatku
       const va = value(a), vb = value(b);
       if (sortState.asc && (va === 0 || vb === 0) && va !== vb) return va === 0 ? 1 : -1;
       return sortState.asc ? va - vb : vb - va;
@@ -371,6 +398,14 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
     applyFilter();
   }));
 
+  grid.addEventListener('click', e => {
+    const b = e.target.closest('.fav-btn');
+    if (!b) return;
+    const c = b.closest('.card');
+    if (favs.has(c.dataset.pid)) favs.delete(c.dataset.pid); else favs.add(c.dataset.pid);
+    saveFavs(); paintFavs(); applySort(); applyFilter();
+  });
+
   document.querySelectorAll('.room-btn').forEach(btn => btn.addEventListener('click', () => {
     document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -384,7 +419,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
     updateSortLabels(); applySort();
   }));
 
-  updateSortLabels(); applySort(); applyFilter();
+  paintFavs(); updateSortLabels(); applySort(); applyFilter();
 </script>
 </body>
 </html>
