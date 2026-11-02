@@ -170,7 +170,11 @@ def fetch_all(rooms_list: list[int]) -> list[dict]:
         declared_total = None
         for page_no in range(1, config.MAX_PAGES_PER_QUERY + 1):
             url = base if page_no == 1 else f"{base}?page={page_no}"
-            page = fetch(url, prefix)
+            page = fetch(url, prefix, allow_404=page_no > 1)
+            if page.status == 404:
+                # Stránka za posledným výsledkom -> koniec stránkovania. Úplnosť stráži COMPLETENESS_RATIO nižšie.
+                print(f"{prefix} {rooms}-izbové: strana {page_no} neexistuje (404), koniec stránkovania")
+                break
             candidates, declared = parse_page(page.text)
             if page_no == 1:
                 declared_total = declared

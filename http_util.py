@@ -46,10 +46,12 @@ def _sleep():
     time.sleep(config.REQUEST_DELAY_SECONDS)
 
 
-def fetch(url: str, log_prefix: str = "", attempts: int = 2) -> Page:
+def fetch(url: str, log_prefix: str = "", attempts: int = 2, allow_404: bool = False) -> Page:
     """
     GET s throttlingom. 403/429 = okamžitý SourceError('blocked') bez opakovania.
     Timeout/5xx: opakuje sa do `attempts` pokusov (predvolene 2, s 10 s pauzou).
+    allow_404=True: HTTP 404 sa nepovažuje za chybu, vráti sa Page so status=404 (pre stránkovanie,
+    kde stránka za posledným výsledkom vráti 404).
     """
     for attempt in range(1, attempts + 1):
         _sleep()
@@ -72,6 +74,8 @@ def fetch(url: str, log_prefix: str = "", attempts: int = 2) -> Page:
         if resp.status_code >= 500 and attempt < attempts:
             time.sleep(10)
             continue
+        if resp.status_code == 404 and allow_404:
+            return Page(url=url, status=404, text=resp.text, elapsed=elapsed)
         if resp.status_code != 200:
             raise SourceError("network", f"HTTP {resp.status_code} pri {url}")
         return Page(url=url, status=resp.status_code, text=resp.text, elapsed=elapsed)

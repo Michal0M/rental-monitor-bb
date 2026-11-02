@@ -50,9 +50,11 @@ jobs:
         run: python notify.py
 
       - name: Vygenerovať HTML stránku
+        if: ${{ !cancelled() }}   # aj keď zlyhal niektorý zdroj, uložíme čo sa podarilo
         run: python render.py
 
       - name: Commitnúť a pushnúť zmeny (DB + HTML)
+        if: ${{ !cancelled() }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
