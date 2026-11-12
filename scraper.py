@@ -67,6 +67,23 @@ def rejection_reason(c: dict) -> str | None:
     return None
 
 
+def announced_elsewhere(conn, source: str, portal_id: str, result: str, price: float | None) -> bool:
+    """
+    True, ak ten istý byt (rovnaké portal_id) už je v DB z INÉHO portálu, a oznámenie by teda bolo duplicitné.
+    DB si zámerne drží jeden riadok na portál (zlúči ich až render.py), takže duplicitu riešime tu, pri oznámeniach.
+      - nový / znova sa objavivší inzerát: duplicita, ak ho druhý portál už má;
+      - zmena ceny: duplicita, len ak druhý portál už má rovnakú (novú) cenu, teda zmena už bola oznámená.
+    Zdroje sa spracúvajú postupne (nehnutelnosti.sk ako prvý), takže oznámi sa ten, ktorý byt uvidí prvý.
+    """
+    rows = conn.execute("SELECT price FROM listings WHERE portal_id = ? AND source != ?",
+                        (portal_id, source)).fetchall()
+    if not rows:
+        return False
+    if result == "price_changed":
+        return any(r["price"] == price for r in rows)
+    return True
+
+
 def apply_detail(conn, module, raw: dict, budget: dict) -> None:
     """
     Doplní `raw` o údaje z detailu (štruktúrovaný stav, "s energiami"), ak to zdroj podporuje.
@@ -145,7 +162,11 @@ def process_source(module, conn, pending: list | None = None) -> tuple[str, dict
         if pending is not None and not seeding and notify.should_notify(listing):
             kind = notify.kind_for(result, prev["price"] if prev else None, listing["price"])
             if kind:
-                pending.append({"kind": kind, "listing": listing, "old_price": prev["price"] if prev else None})
+                if announced_elsewhere(conn, name, raw["portal_id"], result, listing["price"]):
+                    print(f"[{name}] oznámenie preskočené (ten istý byt je už z iného portálu): "
+                          f"{listing['title'][:60]}")
+                else:
+                    pending.append({"kind": kind, "listing": listing, "old_price": prev["price"] if prev else None})
         stats[result] += 1
         if result != "unchanged":
             print(f"[{name}] {result.upper()}: {listing['title'][:60]} | {listing['rooms']}i {listing['area_m2']} m² "
