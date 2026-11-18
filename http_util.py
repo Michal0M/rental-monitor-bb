@@ -24,6 +24,10 @@ HEADERS = {
 ANTIBOT_MARKERS = ["anubis", "cf-chl", "cf-browser-verification", "just a moment",
                    "captcha", "access denied", "are you a robot", "checking your browser"]
 
+# Pauza pred opakovaním po timeoute/5xx: RETRY_PAUSE_SECONDS * číslo pokusu (15 s, potom 30 s).
+# Výpadky portálov (502, timeout) bývajú krátke, 10 s pauza nestačila.
+RETRY_PAUSE_SECONDS = 15
+
 
 class SourceError(Exception):
     """Zdroj sa nepodarilo spracovať (blokovanie, sieť, zmenená štruktúra)."""
@@ -46,10 +50,10 @@ def _sleep():
     time.sleep(config.REQUEST_DELAY_SECONDS)
 
 
-def fetch(url: str, log_prefix: str = "", attempts: int = 2, allow_404: bool = False) -> Page:
+def fetch(url: str, log_prefix: str = "", attempts: int = 3, allow_404: bool = False) -> Page:
     """
     GET s throttlingom. 403/429 = okamžitý SourceError('blocked') bez opakovania.
-    Timeout/5xx: opakuje sa do `attempts` pokusov (predvolene 2, s 10 s pauzou).
+    Timeout/5xx: opakuje sa do `attempts` pokusov (predvolene 3, s pauzou 15 s a potom 30 s).
     allow_404=True: HTTP 404 sa nepovažuje za chybu, vráti sa Page so status=404 (pre stránkovanie,
     kde stránka za posledným výsledkom vráti 404).
     """
@@ -62,7 +66,7 @@ def fetch(url: str, log_prefix: str = "", attempts: int = 2, allow_404: bool = F
             print(f"{log_prefix} sieťová chyba ({type(e).__name__}) pri {url} [pokus {attempt}]")
             if attempt == attempts:
                 raise SourceError("network", f"{type(e).__name__}: {e}") from e
-            time.sleep(10)
+            time.sleep(RETRY_PAUSE_SECONDS * attempt)
             continue
 
         elapsed = time.time() - started
@@ -72,7 +76,8 @@ def fetch(url: str, log_prefix: str = "", attempts: int = 2, allow_404: bool = F
             raise SourceError("blocked", f"HTTP {resp.status_code} pri {url} "
                                          f"(začiatok odpovede: {resp.text[:160]!r})")
         if resp.status_code >= 500 and attempt < attempts:
-            time.sleep(10)
+            print(f"{log_prefix} HTTP {resp.status_code}, opakujem [pokus {attempt}/{attempts}]")
+            time.sleep(RETRY_PAUSE_SECONDS * attempt)
             continue
         if resp.status_code == 404 and allow_404:
             return Page(url=url, status=404, text=resp.text, elapsed=elapsed)
